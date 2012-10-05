@@ -21,17 +21,17 @@ G.Deferred = function (){
         } else if ( state === 'pending' ) { // only 'pending' can change to 'done' or 'fail'
             state = status;
             var cbs = callbacks[status];
-            var always = callbacks['always'];
-
+            var always = callbacks.always;
+            /*jshint loopfunc:true*/
             while( (cb = cbs.shift()) || (cb = always.shift()) ) {
                 setTimeout( (function ( fn ) {
                     return function () {
                         fn.apply( {}, args );
-                    }
+                    };
                 })( cb ), 0 );
             }
         }
-    };
+    }
 
     return {
         state: function () {
@@ -68,35 +68,40 @@ G.Deferred = function (){
                         dispatch('done', cb);
                     }
                     return this;
-                }
-                ,fail: function (cb) {
+                },
+                fail: function (cb) {
                     if (typeof cb === 'function') {
                         dispatch('fail', cb);
                     }
                     return this;
-                }
-                ,always: function (cb) {
+                },
+                always: function (cb) {
                     if (typeof cb === 'function') {
                         dispatch('always', cb);
                     }
                     return this;
-                }
-                ,state: function () {
+                },
+                state: function () {
                     return state;
                 }
-            }
+            };
         }
     };
 };
 
-G.when = function (){
-    var ret     = G.Deferred(),
-        defers  = [].slice.call(arguments),
-        len     = defers.length,
-        count   = 0;
+G.when = function ( defers ){
+    if ( !Array.isArray( defers) ) {
+        defers = [].slice.call(arguments);
+    }
+    var ret     = G.Deferred();
+    var len     = defers.length;
+    var count   = 0;
+    
     if (!len) {
         return ret.done().promise();
     }
+
+    /*jshint loopfunc:true*/
     for ( var i = defers.length - 1; i >= 0; i-- ) {
         defers[i].fail(function () {
             ret.fail();
@@ -105,6 +110,6 @@ G.when = function (){
                 ret.done();
             }
         });
-    };
+    }
     return ret.promise();
-}
+};
