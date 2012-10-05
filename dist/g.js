@@ -969,7 +969,6 @@ G.when = function ( defers ){
             });
         } else {
             jsLoader( module, function () {
-                console.log( 'LOAD\t', module.url, module.status );
                 if ( isModuleURL( module.url ) && Module.queue.length ) {
                     var m = Module.queue.shift();
                     Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
