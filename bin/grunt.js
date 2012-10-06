@@ -25,9 +25,22 @@ module.exports = function(grunt) {
                     src + 'core/deferred.js',
                     src + 'core/loader.js'
                 ],
-                dest: dist + 'g.js'
+                dest: dist + 'g-debug.js'
+            }
+        },
+        min: {
+            "g.js": {
+                src: [
+                    src + 'core/g.js',
+                    src + 'core/es5-safe.js',
+                    src + 'core/util.js',
+                    src + 'core/deferred.js',
+                    src + 'core/loader.js'
+                ],
+                dest: dist + 'g.js',
+                separator: "\n"
             }
         }
     });
-    grunt.registerTask('default', 'lint concat');
+    grunt.registerTask('default', 'lint concat min');
 };
