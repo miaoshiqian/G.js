@@ -477,18 +477,18 @@
     // get compling script node
     var complingScript = null;
     function getComplingScriptNode () {
-        if (complingScript &&
-            complingScript.readyState === 'interactive')
+        if ( complingScript &&
+            complingScript.readyState === 'interactive' )
         {
             return complingScript;
         }
 
-        var scripts = head.getElementsByTagName('script');
+        var scripts = head.getElementsByTagName( 'script' );
         var script, i = scripts.length - 1;
         for ( ; i >= 0; i-- ) {
             script = scripts[i];
             if ( script.readyState === 'interactive' ) {
-                complingScript = scripts[i];
+                complingScript = script;
                 return complingScript;
             }
         }
@@ -508,3 +508,4 @@
 
 define( 'Deferred', [], G.Deferred );
 define( 'util', [], G.util );
+define( 'config', [], G.config );
