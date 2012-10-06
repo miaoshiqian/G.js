@@ -4911,6 +4911,5 @@ process.on = function(e, fn){
 })();
 
 define( function ( require, exports, module ) {
-  console.log('this is mocha');
   module.exports = mocha;
 } );

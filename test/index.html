@@ -7,17 +7,17 @@
 <body>
 <div id="mocha"></div>
 <script type="text/javascript">
-G.use(['./chai.js', './mocha.js', './mocha.css'], function (chai, mocha) {
+G.use(['./expect.js', './mocha.js', './mocha.css'], function (expect, mocha) {
     mocha.setup('bdd');
-    var expect = chai.expect;
 
     describe('Array', function(){
       describe('#indexOf()', function(){
         it('should return -1 when the value is not present', function(){
-            expect('foo').to.not.equal('bar');
-            expect(G).to.not.throw(Error);
-            expect({ foo: 'baz' }).to.have.property('foo')
-              .and.not.equal('bar');
+expect(window.r).to.be(undefined);
+expect({ a: 'b' }).to.eql({ a: 'b' })
+expect(5).to.be.a('number');
+expect([]).to.be.an('array');
+expect(window).not.to.be.an(Image);
         });
       });
     });
