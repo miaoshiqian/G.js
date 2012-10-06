@@ -8,7 +8,7 @@ G.config = {
         'util/storage/localStorage.js': 100000
     },
     alias   : {
-        'jquery': 'lib/jquery/jquery-1.7.2.js',
+        'jquery': 'lib/jquery/jquery-1.8.2.js',
         'localStorage': 'util/storage/localStorage.js'
     },
     combine : {

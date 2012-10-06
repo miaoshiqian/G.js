@@ -9,6 +9,7 @@ module.exports = function(grunt) {
                 src + 'core/g.js',
                 src + 'core/loader.js',
                 src + 'core/util.js',
+                src + 'util/storage/*'
             ]
         },
         jshint: {

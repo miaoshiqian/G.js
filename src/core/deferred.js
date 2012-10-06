@@ -1,3 +1,4 @@
+(function () {
 G.Deferred = function (){
     // state in ['pending', 'done', 'fail']
     var state = "pending";
@@ -113,3 +114,4 @@ G.when = function ( defers ){
     }
     return ret.promise();
 };
+})( G );
