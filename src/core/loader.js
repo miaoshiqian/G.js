@@ -86,17 +86,19 @@
             return Module.save( id, deps, fn );
         }
     };
+    define.amd = {};
 
     function Require ( context ) {
+        context = context || window.location.href;
         function require ( id ) {
-            id = require.id( id );
+            id = require.resolve( id );
             if ( !Require.cache[id] ) {
                 throw new Error( 'This module is not found:' + id );
             }
             return Require.cache[id].exports;
         }
 
-        require.id = function ( id ) {
+        require.resolve = function ( id ) {
             if ( config.alias[id] ) {
                 return config.alias[id];
             }
@@ -246,7 +248,7 @@
             });
         } else {
             jsLoader( module, function () {
-                if ( isModuleURL( module.url ) && Module.queue.length ) {
+                if ( Module.queue.length ) {
                     var m = Module.queue.shift();
                     Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
                 }
@@ -297,7 +299,7 @@
                     onLoad();
                 }
                 if ( module.status > 0 && module.status < STATUS.SAVED ) {
-                    G.log( module.id + 'is not a module' );
+                    G.log( module.id + ' is not a module' );
                     Module.ready( module );
                 }
             }
@@ -404,7 +406,7 @@
     function resolveDeps ( deps, context ) {
         var require = Require( context );
         var modules = deps.map( function (dep) {
-            return Module( require.id( dep ) );
+            return Module( require.resolve( dep ) );
         });
         var toFetch = modules.filter(function ( m ) {
             return m.status < STATUS.FETCHING;

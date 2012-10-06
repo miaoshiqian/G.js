@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>G.js test</title>
+        <script type="text/javascript" src="../dist/g-debug.js"></script>
+    </head>
+<body>
+<div id="mocha"></div>
+<script type="text/javascript">
+G.use(['./chai.js', './mocha.js', './mocha.css'], function (chai, mocha) {
+    mocha.setup('bdd');
+    var expect = chai.expect;
+
+    describe('Array', function(){
+      describe('#indexOf()', function(){
+        it('should return -1 when the value is not present', function(){
+            expect('foo').to.not.equal('bar');
+            expect(G).to.not.throw(Error);
+            expect({ foo: 'baz' }).to.have.property('foo')
+              .and.not.equal('bar');
+        });
+      });
+    });
+    mocha.run().globals(['match']);
+});
+</script>
+</body>
+</html>

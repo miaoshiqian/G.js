@@ -1,4 +1,5 @@
-var G = this.G = {};
+var G = this.G = function () {
+};
 
 G.config = {
     debug   : true,
