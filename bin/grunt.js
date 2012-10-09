@@ -22,11 +22,21 @@ module.exports = function(grunt) {
                 src: [
                     src + 'core/g.js',
                     src + 'core/es5-safe.js',
+                    src + 'core/json2.js',
                     src + 'core/util.js',
                     src + 'core/deferred.js',
                     src + 'core/loader.js'
                 ],
                 dest: dist + 'g-debug.js'
+            },
+            "g-mobil.js": {
+                src: [
+                    src + 'core/g.js',
+                    src + 'core/util.js',
+                    src + 'core/deferred.js',
+                    src + 'core/loader.js'
+                ],
+                dest: dist + 'g-mobil.js'
             }
         },
         min: {
