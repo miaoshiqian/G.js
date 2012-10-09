@@ -1,3 +1,319 @@
+var G = this.G = {};
+
+G._config = {};
+
+G.config = function ( config ) {
+    Object.keys( config ).forEach( function (k) {
+        G._config[k] = config[k];
+    });
+};
+
+G.log = function (data) {
+    if (G.config.debug && typeof console != 'undefined' && console.log){
+        console.log(data);
+    }
+};
+(function (G) {
+
+    /******  Util  ******/
+    G.util = {
+        // prefix + '_' + timestamp + random
+        guid: function ( prefix ) {
+            prefix = prefix || '';
+            return prefix  + '_' + Date.now() + Math.random();
+        }
+    };
+    var util = G.util;
+
+    /***** Language *****/
+    util.lang = {
+        isFunction: function ( obj ) {
+            return typeof obj === 'function';
+        },
+        isString: function ( obj ) {
+            return typeof obj === 'string';
+        }
+    };
+
+    /******  Math  ******/
+    util.math = {
+        random: function ( from, to ) {
+            return parseInt(Math.random() * (to - from + 1) + from, 10);
+        }
+    };
+
+
+    /******  Path  ******/
+    var MULTIPLE_SLASH_RE = /([^:\/])\/\/+/g;
+    var DIRNAME_RE = /.*(?=\/.*$)/;
+
+    util.path ={
+        dirname: function ( url ) {
+            var match = url.match(DIRNAME_RE);
+            return (match ? match[0] : '.') + '/';
+        },
+        isAbsolute: function ( url ) {
+            return url.indexOf('://') > 0 || url.indexOf('//') === 0;
+        },
+        isRelative: function ( url ) {
+            return url.indexOf('./') === 0 || url.indexOf('../') === 0;
+        },
+        realpath: function (path) {
+            MULTIPLE_SLASH_RE.lastIndex = 0;
+
+            // 'file:///a//b/c' ==> 'file:///a/b/c'
+            // 'http://a//b/c' ==> 'http://a/b/c'
+            if (MULTIPLE_SLASH_RE.test(path)) {
+                path = path.replace(MULTIPLE_SLASH_RE, '$1\/');
+            }
+
+            // 'a/b/c', just return.
+            if (path.indexOf('.') === -1) {
+                return path;
+            }
+
+            var original = path.split('/');
+            var ret = [], part;
+
+            for (var i = 0; i < original.length; i++) {
+                part = original[i];
+
+                if (part === '..') {
+                    if (ret.length === 0) {
+                        throw new Error('The path is invalid: ' + path);
+                    }
+                    ret.pop();
+                } else if (part !== '.') {
+                    ret.push(part);
+                }
+            }
+
+            return ret.join('/');
+        }
+    };
+
+    /*****  User Agent  *****/
+    var ua = util.ua = {
+        ie          : 0,
+        opera       : 0,
+        gecko       : 0,
+        webkit      : 0,
+        chrome      : 0,
+        mobile      : null,
+        air         : 0,
+        ipad        : 0,
+        iphone      : 0,
+        ipod        : 0,
+        ios         : null,
+        android     : 0,
+        os          : null
+    };
+
+    var UA = window.navigator.userAgent;
+
+    if ( /windows|win32/i.test( UA ) ) {
+        ua.os = 'windows';
+    } else if ( /macintosh/i.test( UA ) ) {
+        ua.os = 'macintosh';
+    } else if ( /rhino/i.test( UA )) {
+        ua.os = 'rhino';
+    }
+
+    if ( /KHTML/.test( UA ) ) {
+        ua.webkit = true;
+    }
+
+    var match = UA.match( /AppleWebKit\/([^\s]*)/ );
+    if ( match && match[1] ) {
+        ua.webkit = numberify( match[1] );
+        
+        if ( / Mobile\//.test( UA ) ) {
+            ua.mobile = "Apple"; 
+
+            match = UA.match( /OS ([^\s]*)/ );
+            if ( match && match[1] ) {
+                match = numberify( match[1].replace( '_', '.' ) );
+            }
+            ua.ipad   = ( navigator.platform === 'iPad' )   ? match : 0;
+            ua.ipod   = ( navigator.platform === 'iPod' )   ? match : 0;
+            ua.iphone = ( navigator.platform === 'iPhone' ) ? match : 0;
+            ua.ios    = ua.ipad || ua.iphone || ua.ipod;
+        } else {
+            match = UA.match( /NokiaN[^\/]*|Android \d\.\d|webOS\/\d\.\d/ );
+            if ( match ) {
+                ua.mobile = match[0]; 
+            }
+            if ( / Android/.test( ua ) ) {
+                ua.mobile = 'Android';
+                match = UA.match( /Android ([^\s]*);/ );
+                if ( match && match[1] ) {
+                    ua.android = numberify( match[1] );
+                }
+            }
+        }
+
+        match = UA.match( /Chrome\/([^\s]*)/ );
+        if ( match && match[1] ) {
+            ua.chrome = numberify( match[1] );
+        } else {
+            match = UA.match( /AdobeAIR\/([^\s]*)/ );
+            if ( match ) {
+                ua.air = match[0]; 
+            }
+        }
+    }
+
+    if ( !ua.webkit ) {
+        match = UA.match( /Opera[\s\/]([^\s]*)/ );
+        if ( match && match[1] ) {
+            ua.opera = numberify( match[1] );
+            match = UA.match( /Opera Mini[^;]*/ );
+            if ( match ) {
+                ua.mobile = match[0]; 
+            }
+        } else {
+            match = UA.match( /MSIE\s([^;]*)/ );
+            if ( match && match[1] ) {
+                ua.ie = numberify( match[1] );
+            } else { 
+                match = UA.match( /Gecko\/([^\s]*)/ );
+                if ( match ) {
+                    ua.gecko=1; 
+                    match = ua.match( /rv:([^\s\)]*)/ );
+                    if ( match && match[1] ) {
+                        ua.gecko = numberify( match[1] );
+                    }
+                }
+            }
+        }
+    }
+
+
+    function numberify ( str ) {
+        var count = 0;
+        return parseFloat( str.replace( /\./g, function() {
+            return ( count++ == 1 ) ? '' : '.';
+        } ) );
+    }
+
+}) (G);
+(function () {
+G.Deferred = function (){
+    // state in ['pending', 'done', 'fail']
+    var state = "pending";
+    var callbacks = {
+            'done':     [],
+            'fail':     [],
+            'always':   []
+        };
+    // `args` will be the `arguments` of callbacks
+    var args = [];
+
+    function dispatch ( status, cb ) {
+        if (typeof cb === 'function') {
+            if ( state === status || (status === 'always' && state !== 'pending') ) {
+                setTimeout( function () {
+                    cb.apply( {}, args );
+                }, 0 );
+            } else {
+                callbacks[status].push( cb );
+            }
+        } else if ( state === 'pending' ) { // only 'pending' can change to 'done' or 'fail'
+            state = status;
+            var cbs = callbacks[status];
+            var always = callbacks.always;
+            /*jshint loopfunc:true*/
+            while( (cb = cbs.shift()) || (cb = always.shift()) ) {
+                setTimeout( (function ( fn ) {
+                    return function () {
+                        fn.apply( {}, args );
+                    };
+                })( cb ), 0 );
+            }
+        }
+    }
+
+    return {
+        state: function () {
+            return state; 
+        },
+        done: function (cb) {
+            if (typeof cb === 'function') {
+                dispatch('done', cb);
+            } else {
+                args = [].slice.call(arguments);
+                dispatch('done');
+            }
+            return this;
+        },
+        fail: function (cb) {
+            if (typeof cb === 'function') {
+                dispatch('fail', cb);
+            } else {
+                args = [].slice.call(arguments);
+                dispatch('fail');
+            }
+            return this;
+        },
+        always: function (cb) {
+            if (typeof cb === 'function') {
+                dispatch('always', cb);
+            }
+            return this;
+        },
+        promise: function () {
+            return {
+                done: function (cb) {
+                    if (typeof cb === 'function') {
+                        dispatch('done', cb);
+                    }
+                    return this;
+                },
+                fail: function (cb) {
+                    if (typeof cb === 'function') {
+                        dispatch('fail', cb);
+                    }
+                    return this;
+                },
+                always: function (cb) {
+                    if (typeof cb === 'function') {
+                        dispatch('always', cb);
+                    }
+                    return this;
+                },
+                state: function () {
+                    return state;
+                }
+            };
+        }
+    };
+};
+
+G.when = function ( defers ){
+    if ( !Array.isArray( defers) ) {
+        defers = [].slice.call(arguments);
+    }
+    var ret     = G.Deferred();
+    var len     = defers.length;
+    var count   = 0;
+    
+    if (!len) {
+        return ret.done().promise();
+    }
+
+    /*jshint loopfunc:true*/
+    for ( var i = defers.length - 1; i >= 0; i-- ) {
+        defers[i].fail(function () {
+            ret.fail();
+        }).done(function () {
+            if ( ++count === len ) {
+                ret.done();
+            }
+        });
+    }
+    return ret.promise();
+};
+})( G );
 /******** Loader ********/
 (function ( global, G, util, config ) {
     var STATUS = {
