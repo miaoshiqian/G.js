@@ -5,8 +5,8 @@ module.exports = function(grunt) {
     grunt.initConfig({
         lint: {
             all: [
+                src + 'core/boot.js',
                 src + 'core/deferred.js',
-                src + 'core/g.js',
                 src + 'core/loader.js',
                 src + 'core/util.js',
                 src + 'util/storage/*'
@@ -20,7 +20,7 @@ module.exports = function(grunt) {
         concat: {
             "g.js": {
                 src: [
-                    src + 'core/g.js',
+                    src + 'core/boot.js',
                     src + 'core/es5-safe.js',
                     src + 'core/json2.js',
                     src + 'core/util.js',
@@ -31,18 +31,29 @@ module.exports = function(grunt) {
             },
             "g-mobil.js": {
                 src: [
-                    src + 'core/g.js',
+                    src + 'core/boot.js',
                     src + 'core/util.js',
                     src + 'core/deferred.js',
                     src + 'core/loader.js'
                 ],
                 dest: dist + 'g-mobil.js'
+            },
+            "core/g.js": {
+                src: [
+                    src + 'core/boot.js',
+                    src + 'core/es5-safe.js',
+                    src + 'core/json2.js',
+                    src + 'core/util.js',
+                    src + 'core/deferred.js',
+                    src + 'core/loader.js'
+                ],
+                dest: src + 'core/g.js'
             }
         },
         min: {
             "g.js": {
                 src: [
-                    src + 'core/g.js',
+                    src + 'core/boot.js',
                     src + 'core/es5-safe.js',
                     src + 'core/util.js',
                     src + 'core/deferred.js',
