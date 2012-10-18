@@ -18,7 +18,7 @@ module.exports = function(grunt) {
             }
         },
         concat: {
-            "g.js": {
+            "g-debug.js": {
                 src: [
                     src + 'core/boot.js',
                     src + 'core/es5-safe.js',
@@ -51,7 +51,7 @@ module.exports = function(grunt) {
             }
         },
         min: {
-            "g.js": {
+            "g-min.js": {
                 src: [
                     src + 'core/boot.js',
                     src + 'core/es5-safe.js',
@@ -59,7 +59,7 @@ module.exports = function(grunt) {
                     src + 'core/deferred.js',
                     src + 'core/loader.js'
                 ],
-                dest: dist + 'g.js',
+                dest: dist + 'g-min.js',
                 separator: "\n"
             }
         }

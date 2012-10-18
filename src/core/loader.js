@@ -163,7 +163,7 @@
                     deps = module.dependencies.map( function (dep) {
                         return dep.exports;
                     });
-                    module.factory.call( window, Require( window.location.href ) );
+                    module.factory.apply( window, deps );
                 }
                 // define( id, deps, function (require, exports, module ) {} );
                 else {
@@ -274,6 +274,7 @@
         }, 30000 ); // 30s
 
         node.setAttribute( 'type', "text/javascript" );
+        node.setAttribute( 'charset', 'utf-8' );
         node.setAttribute( 'src', module.url );
         node.setAttribute( 'async', true );
 
@@ -313,7 +314,7 @@
     // `onload` event is supported in WebKit since 535.23
     // Ref:
     //  - https://bugs.webkit.org/show_activity.cgi?id=38995
-    var isOldWebKit = util.ua.webkit < 536;
+    var isOldWebKit = util.ua.webkit && util.ua.webkit < 536;
 
     // `onload/onerror` event is supported since Firefox 9.0
     // Ref:
@@ -422,8 +423,8 @@
         if ( util.path.isAbsolute( url) ) {
             var found = false;
             for (var i = config.servers.length - 1; i >= 0; i--) {
-                if ( url.indexOf( config.servers[i] ) === 0 ) {
-                    found = config.servers[i];
+                if ( url.indexOf( config.servers[i] + config.base ) === 0 ) {
+                    found = config.servers[i] + config.base;
                     break;
                 }
             }
@@ -432,10 +433,6 @@
             } else {
                 return url;
             }
-        }
-        // remove config.base
-        if ( url.indexOf( config.base ) === 0 ) {
-            url = url.replace( config.base, '' );
         }
         // remove config.version
         if ( VERSION_RE.test(url) ) {
@@ -495,14 +492,17 @@
         if (node) {
             return node.hasAttribute ?
                node.src :
-               node.getAttribute('src', true);
+               node.getAttribute('src', true, 4);
         }
     }
     G.Module = {
         cache: Module.cache
     };
-}) (window, G, G.util, G._config);
 
-define( 'Deferred', [], G.Deferred );
-define( 'util', [], G.util );
-define( 'config', [], G.config );
+    define( 'Deferred', [], G.Deferred );
+    define( 'util', [], G.util );
+    define( 'config', [], G.config );
+    define( 'require', [], function () {
+        return Require();
+    });
+}) (window, G, G.util, G._config);

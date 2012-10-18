@@ -2,26 +2,43 @@
 <html>
     <head>
         <title>G.js test</title>
-        <script type="text/javascript" src="../dist/g-debug.js"></script>
+        <meta charset="UTF-8" />
+        <script type="text/javascript" src="../dist/g-debug.js"  charset="UTF-8"></script>
     </head>
 <body>
 <div id="mocha"></div>
 <script type="text/javascript">
-G.use(['./expect.js', './mocha.js', './mocha.css'], function (expect, mocha) {
-    mocha.setup('bdd');
+G.config({
+    debug   : true,
+    servers : ['http://g.local'],
+    base    : '/src/',
+    version : {
+        'util/storage/localStorage.js': 100000
+    },
+    alias   : {
+        'jquery': 'lib/jquery/jquery-1.8.2.js',
+        'localStorage': 'util/storage/localStorage.js'
+    },
+    combine : {
+        'util/storage/storage.cmb.js': ['localStorage', './cookie.js', '.flashCookie.js']
+    }
+});
+G.use(['require', './expect.js', './mocha.js', './mocha.css'], function ( require ) {
+    var mocha = require('./mocha.js');
+    G.use(['require', 'util/async/event.js'], function ( require ) {
+        var event = require('util/async/event.js');
 
-    describe('Array', function(){
-      describe('#indexOf()', function(){
-        it('should return -1 when the value is not present', function(){
-expect(window.r).to.be(undefined);
-expect({ a: 'b' }).to.eql({ a: 'b' })
-expect(5).to.be.a('number');
-expect([]).to.be.an('array');
-expect(window).not.to.be.an(Image);
+        mocha.setup('bdd');
+
+        describe('define', function(){
+            describe('#Get ID from url', function(){
+                it('should return the correct id', function () {
+                    expect( event ).to.be.a( 'object' );
+                });
+            });
         });
-      });
-    });
-    mocha.run().globals(['match']);
+        mocha.run().globals(['match']);
+    })
 });
 </script>
 </body>
