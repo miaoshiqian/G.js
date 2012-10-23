@@ -1415,44 +1415,13 @@ G.when = function ( defers ){
 
     Module.load = function ( module ) {
         var id      = module.id;
-        var combine = config.combine[id];
         module.url = getAbsoluteUrl( id );
 
-        if ( combine ) {
-            combine = combine.map( function ( id ) {
-                return Module( id );
-            });
+        // always try .js ext
+        var ext = getExt( module.url ) || '.js';
+        var loader = Module.Plugin.Loaders[ext] || Module.Plugin.Loaders['.js'];
 
-            if ( config.debug ) {
-                define( id, combine.map( function ( dep ) {
-                    return dep.id;
-                } ) );
-            } else {
-                combine.forEach( function ( dep ) {
-                    if ( dep.status < STATUS.FETCHING ) {
-                        dep.status = STATUS.FETCHING;
-                    }
-                } );
-            }
-        }
-
-        if ( IS_CSS_RE.test( module.url ) ) {
-            cssLoader( module, function () {
-                if ( combine ) {
-                    combine.forEach( function ( dep ) {
-                        dep.status = STATUS.COMPILED;
-                        Module.defers[dep.id].done();
-                    } );
-                }
-            });
-        } else {
-            jsLoader( module, function () {
-                if ( Module.queue.length ) {
-                    var m = Module.queue.shift();
-                    Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
-                }
-            } );
-        }
+        loader( module, config );
     };
 
     Module.save = function ( id, deps, fn ) {
@@ -1466,9 +1435,35 @@ G.when = function ( defers ){
 
         Module.wait( module );
     };
+    Module.Plugin = {
+        Loaders: {
+            '.js'  : jsLoader,
+            '.css' : cssLoader
+        }
+    };
 
     // Loaders
-    function jsLoader ( module, onLoad ) {
+    function jsLoader ( module, config ) {
+        var combine = config.combine[id];
+        
+        if ( combine ) {
+            combine = combine.map( function ( id ) {
+                return Module( id );
+            });
+
+            if ( config.debug ) {
+                return define( id, combine.map( function ( dep ) {
+                    return dep.id;
+                } ) );
+            } else {
+                combine.forEach( function ( dep ) {
+                    if ( dep.status < STATUS.FETCHING ) {
+                        dep.status = STATUS.FETCHING;
+                    }
+                } );
+            }
+        }
+
         var node  = doc.createElement( "script" );
         var done  = false;
         var timer = setTimeout( function () {
@@ -1495,8 +1490,9 @@ G.when = function ( defers ){
                 if (module.status === STATUS.FETCHING) {
                     module.status = STATUS.FETCHED;
                 }
-                if ( util.lang.isFunction( onLoad ) ) {
-                    onLoad();
+                if ( Module.queue.length ) {
+                    var m = Module.queue.shift();
+                    Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
                 }
                 if ( module.status > 0 && module.status < STATUS.SAVED ) {
                     G.log( module.id + ' is not a module' );
@@ -1526,7 +1522,26 @@ G.when = function ( defers ){
     var isOldFirefox = window.navigator.userAgent.indexOf('Firefox') > 0 &&
         !('onload' in document.createElement('link'));
 
-    function cssLoader ( module, onLoad ) {
+    function cssLoader ( module, config ) {
+        var combine = config.combine[id];
+        if ( combine ) {
+            combine = combine.map( function ( id ) {
+                return Module( id );
+            });
+
+            if ( config.debug ) {
+                return define( id, combine.map( function ( dep ) {
+                    return dep.id;
+                } ) );
+            } else {
+                combine.forEach( function ( dep ) {
+                    if ( dep.status < STATUS.FETCHING ) {
+                        dep.status = STATUS.FETCHING;
+                    }
+                } );
+            }
+        }
+
         var node = doc.createElement( "link" );
         var timer;
         node.setAttribute( 'type', "text/css" );
@@ -1545,7 +1560,7 @@ G.when = function ( defers ){
                 poll(node, onCSSLoad);
             }, 0); // Begin after node insertion
         }
-        
+
         module.status = STATUS.FETCHING;
         head.appendChild(node);
 
@@ -1559,8 +1574,12 @@ G.when = function ( defers ){
             if (module.status === STATUS.FETCHING) {
                 module.status = STATUS.FETCHED;
             }
-            if ( util.lang.isFunction( onLoad ) ) {
-                onLoad();
+
+            if ( combine ) {
+                combine.forEach( function ( dep ) {
+                    dep.status = STATUS.COMPILED;
+                    Module.defers[dep.id].done();
+                } );
             }
             Module.ready( module );
         }
