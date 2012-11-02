@@ -1,6 +1,5 @@
 define(function ( require, exports, module ) {
     var config  = require( 'config' );
-    var $       = require( 'jquery' );
 
     var STORAGE_AGENT = '__STORAGE_AGENT__';
     var DEFAULT_NAMESPACE  = '__LOCAL_STORAGE__';
@@ -12,11 +11,10 @@ define(function ( require, exports, module ) {
         // pause the module declearation until the iframe loaded
         module.pause();
 
-        var iframe = document.createElement( 'IFRAME' );
-        iframe.src = 'javascript: false;'
+        var iframe = document.createElement("<iframe>");
+        iframe.src = 'javascript:false';
         iframe.style.display = "none";
-
-        iframe.onload = function () {
+        iframe.attachEvent('onload', function () {
             var doc = iframe.contentWindow.document;
             var data = doc.createElement( 'INPUT' );
 
@@ -31,16 +29,17 @@ define(function ( require, exports, module ) {
 
             Storage = function ( namespace ) {
                 data.load( STORAGE_AGENT );
-                var saved_namespace = [];
+                var saved_namespace = {};
                 try {
-                    saved_namespace = JSON.parse( data.getAttribute( 'saved_namespace' ) ) || [];
+                    saved_namespace = JSON.parse( data.getAttribute( '__SAVED_NS__' ) ) || {};
                 } catch ( ex ) {
                     // it is ok
                 }
-
-                saved_namespace.push( namespace );
-                data.setAttribute( 'saved_namespace', saved_namespace );
-                data.save( STORAGE_AGENT );
+                if ( !saved_namespace[namespace] ) {
+                    saved_namespace[namespace] = 1;
+                    data.setAttribute( '__SAVED_NS__', JSON.stringify( saved_namespace ) );
+                    data.save( STORAGE_AGENT );
+                }
 
                 var self = {
                     set: function ( k, v ) {
@@ -50,13 +49,14 @@ define(function ( require, exports, module ) {
                         data.save( namespace );
                         data.load( namespace );
                         try {
-                            saved_keys = JSON.parse( data.getAttribute( 'saved_keys' ) ) || {};
+                            saved_keys = JSON.parse( data.getAttribute( '__SAVED_K__' ) ) || {};
                         } catch ( ex ) {
                             // it is ok
                         }
+
                         if ( !saved_keys[k] ) {
                             saved_keys[k] = 1;
-                            data.setAttribute( 'saved_keys', JSON.stringify( saved_keys ) );
+                            data.setAttribute( '__SAVED_K__', JSON.stringify( saved_keys ) );
                             data.save( namespace );
                         }
                     },
@@ -70,13 +70,13 @@ define(function ( require, exports, module ) {
                         data.removeAttribute( k );
                         data.save( namespace );
                         try {
-                            saved_keys = JSON.parse( data.getAttribute( 'saved_keys' ) ) || {};
-                        } catch {
+                            saved_keys = JSON.parse( data.getAttribute( '__SAVED_K__' ) ) || {};
+                        } catch (ex) {
                             // it is ok
                         }
                         if ( saved_keys[k] ) {
                             delete saved_keys[k];
-                            data.setAttribute( 'saved_keys', JSON.stringify( saved_keys ) );
+                            data.setAttribute( '__SAVED_K__', JSON.stringify( saved_keys ) );
                             data.save( namespace );
                         }
                     },
@@ -86,21 +86,26 @@ define(function ( require, exports, module ) {
                             data.load( STORAGE_AGENT );
                             var saved_namespace = {};
                             try {
-                                saved_namespace = JSON.parse( data.getAttribute( 'saved_namespace' ) ) || {};
+                                saved_namespace = JSON.parse( data.getAttribute( '__SAVED_NS__' ) ) || {};
+                                // clear namespace
+                                data.setAttribute('__SAVED_NS__', '{}');
+                                data.save( STORAGE_AGENT );
                             } catch ( ex ) {
                                 // it is ok
                             }
+                            delete saved_namespace[DEFAULT_NAMESPACE];
                             Object.keys( saved_namespace ).forEach( function ( ns ) {
                                 var storage = new Storage( ns );
                                 storage.clear();
+                                delete saved_namespace[ns];
                             } );
-                        } else {
-                            // just clear this namespace
-                            var saved_keys = self.get( '__SAVED_KEYS__' ) || {};
-                            Object.keys( saved_keys ).forEach( function ( key ) {
-                                self.remove( key );
-                            });
+
                         }
+                        // just clear this namespace
+                        var saved_keys = JSON.parse(self.get( '__SAVED_K__' )) || {};
+                        Object.keys( saved_keys ).forEach( function ( key ) {
+                            self.remove( key );
+                        });
                     }
                 };
                 return self;
@@ -110,14 +115,16 @@ define(function ( require, exports, module ) {
             Storage.get = storage.get;
             Storage.set = storage.set;
             Storage.remove = storage.remove;
+            Storage.clear = storage.clear;
 
             module.exports = Storage;
             // this module is now ready
             module.resume();
-        };
+        });
+        
+        document.appendChild( iframe );
 
-        iframe.src = config.base + "/crossdomain.html";
-        document.insertBefore( iframe, document.firstChild );
+        iframe.src = config.server + "/crossdomain.html";
     } else {
         Storage = function ( namespace ) {
             var saved_namespace = {};
@@ -168,7 +175,7 @@ define(function ( require, exports, module ) {
                     } else {
                         var saved_keys =  {};
                         try {
-                            saved_keys = JSON.stringify( self.get( '__SAVED_K__' ) );
+                            saved_keys = JSON.parse( self.get( '__SAVED_K__' ) ) || {};
                         } catch ( ex ) {
                             // it is ok
                         }
@@ -182,10 +189,11 @@ define(function ( require, exports, module ) {
             return self;
         };
         
-        var storage = Storage("");
+        var storage = Storage( DEFAULT_NAMESPACE );
         Storage.get = storage.get;
         Storage.set = storage.set;
         Storage.remove = storage.remove;
+        Storage.clear = storage.clear;
 
         module.exports = Storage;
     }

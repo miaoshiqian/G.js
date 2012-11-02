@@ -2,6 +2,9 @@
 <html>
     <head>
         <title>G.js test</title>
+        <script type="text/javascript">
+            document.domain = 'gjs.com';
+        </script>
         <meta charset="UTF-8" />
         <script type="text/javascript" src="../dist/g-debug.js"  charset="UTF-8"></script>
     </head>
@@ -10,7 +13,7 @@
 <script type="text/javascript">
 G.config({
     debug   : true,
-    servers : ['http://g.local'],
+    servers : ['http://gjs.com'],
     base    : '/src/',
     version : {
         'util/storage/localStorage.js': 100000
@@ -23,22 +26,53 @@ G.config({
         'util/storage/storage.cmb.js': ['localStorage', './cookie.js', '.flashCookie.js']
     }
 });
-G.use(['require', './expect.js', './mocha.js', './mocha.css'], function ( require ) {
+G.use(['require', 'Promise', './expect.js', './mocha.js', './mocha.css'], function ( require ) {
     var mocha = require('./mocha.js');
-    G.use(['require', 'util/async/event.js'], function ( require ) {
-        var event = require('util/async/event.js');
+    var except = require('./expect.js');
+    var Promise = require('Promise');
+    var allTest = [];
+    mocha.setup('bdd');
 
-        mocha.setup('bdd');
+    var localStorageTest = Promise.defer();
+    allTest.push(localStorageTest);
+    G.use(['require', 'util/storage/localStorage.js'], function ( require ) {
+        var Storage = require('util/storage/localStorage.js');
 
-        describe('define', function(){
-            describe('#Get ID from url', function(){
-                it('should return the correct id', function () {
-                    expect( event ).to.be.a( 'object' );
-                });
+        describe('localStorage', function(){
+            it('data between to different namespace won\'t be shared', function () {
+                var S1 = new Storage('S1');
+                var S2 = new Storage('S2');
+                S1.set('foo', 'bar');
+                S2.set('foo', 'notbar');
+                except(S1.get('foo')).to.be('bar');
+                except(S2.get('foo')).not.to.be('bar');
+                S1.clear();
+                except(S2.get('foo')).to.be('notbar');
+                S2.clear();
+            });
+            it('data will gone after clear', function () {
+                var s = new Storage('CL');
+                s.set('f1', 'f1');
+                s.set('f2', 'f2');
+                s.clear();
+                except(s.get('f1')).to.be(null);
+                except(s.get('f2')).to.be(null);
+            });
+            it('all data will gone after global clear', function () {
+                var s1 = new Storage('S1');
+                var s2 = new Storage('S2');
+                s1.set('foo', 'bar');
+                s2.set('pub', 'hub');
+                Storage.clear();
+                except(s1.get('foo')).to.be(null);
+                except(s2.get('pub')).to.be(null);
             });
         });
+        localStorageTest.done();
+    });
+    Promise.when(allTest).done(function () {
         mocha.run().globals(['match']);
-    })
+    });
 });
 </script>
 </body>

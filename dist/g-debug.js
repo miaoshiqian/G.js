@@ -1444,6 +1444,7 @@ G.when = function ( defers ){
 
     // Loaders
     function jsLoader ( module, config ) {
+        var id = module.id;
         var combine = config.combine[id];
         
         if ( combine ) {
@@ -1523,6 +1524,7 @@ G.when = function ( defers ){
         !('onload' in document.createElement('link'));
 
     function cssLoader ( module, config ) {
+        var id = module.id;
         var combine = config.combine[id];
         if ( combine ) {
             combine = combine.map( function ( id ) {
@@ -1717,13 +1719,25 @@ G.when = function ( defers ){
                node.getAttribute('src', true, 4);
         }
     }
+
+    function getExt ( url ) {
+        var arr = url.split('.');
+        if ( arr.length > 1 ) {
+            return "." + arr[arr.length-1];
+        }
+    }
     G.Module = {
         cache: Module.cache
     };
 
-    define( 'Deferred', [], G.Deferred );
+    define( 'Promise', [], function () {
+        return {
+            when: G.when,
+            defer: G.Deferred
+        };
+    });
     define( 'util', [], G.util );
-    define( 'config', [], G.config );
+    define( 'config', [], G._config );
     define( 'require', [], function () {
         return Require();
     });
