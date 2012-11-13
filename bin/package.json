@@ -1,0 +1,10 @@
+{
+  "name": "g.js-grunt-tool",
+  "description": "grunt build tool for g.js.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/j1anb1n/G.js",
+  "main": "grunt.js",
+  "dependencies": {
+    "uglify-js": ">=1.3.4"
+  }
+}
