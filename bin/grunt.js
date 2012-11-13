@@ -1,6 +1,4 @@
-var File = require('file');
 var Path   = require('path');
-var Promise = require('node-promise');
 var src  = Path.resolve('../src') + "/";
 var dist = Path.resolve('../dist') + "/";
 var pub  = Path.resolve('../public') + "/";
@@ -85,26 +83,6 @@ var gruntConfig = {
     build_cmb_js: {},
     build_css: {}
 };
-
-var compileConfigs = []
-File.walkSync(src + "util/storage", function (path, dirs, files) {
-    files && files.forEach(function (file) {
-        if (Path.basename(file) === 'compile.config.json') {
-            compileConfigs.push(Path.normalize(path + '/' + file));
-        }
-    });
-});
-
-compileConfigs.forEach(function (config) {
-    var config = require(config);
-    config.combine && Object.keys(config.combine).forEach(function (cmb) {
-        gruntConfig.build_cmb_js[cmb] = {
-            src: config.combine[cmb].map(function (file){ return src + file; }),
-            dest: pub + cmb,
-            separator: "\n;"
-        }
-    });
-});
 
 module.exports = function(grunt) {
     grunt.loadTasks('tasks');
