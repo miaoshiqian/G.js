@@ -1,5 +1,5 @@
 .DS_Store
 .svn
-src/core/g.js
+src/g.js
 node_modules
 public
