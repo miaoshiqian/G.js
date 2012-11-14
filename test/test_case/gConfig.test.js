@@ -13,6 +13,8 @@ define(function (require, exports, module) {
                 var value = {'it is': 'ok'};
                 G.config(['foo', 'bar', 'pub', 'hub'], value);
                 except(G.config(['foo', 'bar', 'pub', 'hub'])).to.be(value);
+                delete G.config().foo.bar.pub.hub;
+                except(G.config(['foo', 'bar', 'pub', 'hub'])).to.be(undefined);
             });
         });
         defer.done();
