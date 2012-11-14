@@ -103,7 +103,7 @@ body {
 }
 
 #mocha .test.pass.fast .duration {
-  display: none;
+  background: #00A0D1;
 }
 
 #mocha .test.pending {
