@@ -10,7 +10,8 @@ var gruntConfig = {
             src + 'core/deferred.js',
             src + 'core/loader.js',
             src + 'core/util.js',
-            src + 'util/**/*.js'
+            src + 'util/**/*.js',
+            src + 'app/**/*.js'
         ]
     },
     jshint: {
@@ -53,7 +54,7 @@ var gruntConfig = {
         }
     },
     min: {
-        "g-min.js": {
+        "g-debug.min.js": {
             src: [
                 src + 'core/boot.js',
                 src + 'core/es5-safe.js',
@@ -61,8 +62,16 @@ var gruntConfig = {
                 src + 'core/deferred.js',
                 src + 'core/loader.js'
             ],
-            dest: dist + 'g-min.js',
-            separator: "\n"
+            dest: dist + 'g-debug.min.js'
+        },
+        "g-mobil.min.js": {
+            src: [
+                src + 'core/boot.js',
+                src + 'core/util.js',
+                src + 'core/deferred.js',
+                src + 'core/loader.js'
+            ],
+            dest: dist + 'g-mobil.min.js'
         },
         "public/g.js": {
             src: [
@@ -80,14 +89,12 @@ var gruntConfig = {
         src: src,
         files: src+"**/*.js"
     },
-    build_cmb_js: {
-        'hello': '1'
-    },
+    build_cmb_js: {},
     build_css: {}
 };
 
 module.exports = function(grunt) {
     grunt.loadTasks('tasks');
     grunt.initConfig(gruntConfig);
-    grunt.registerTask('default', 'load-config lint concat min build_js');
+    grunt.registerTask('default', 'lint concat min build_js');
 };

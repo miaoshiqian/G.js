@@ -47,11 +47,14 @@ module.exports = function (grunt) {
         var src = config.src;
         files.forEach(function (file) {
             var f = fs.readFileSync(file.abs).toString();
+            var uri = file.abs.replace(src, '');
+            var stat = fs.statSync(file.abs);
 
             if (f.substr(0, 6) === 'define') {
-                content = transport(f, file.abs.replace(src, ''));
-                grunt.file.write(dest + file.abs.replace(src, ''), minifyCode(content));
+                content = transport(f, uri);
+                grunt.file.write(dest + uri, minifyCode(content));
             }
+            grunt.config(['g-config', 'version', uri], stat.mtime/1000);
         });
     });
 }

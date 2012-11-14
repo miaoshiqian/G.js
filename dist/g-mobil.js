@@ -1,12 +1,53 @@
 var G = this.G = {};
 
-G._config = {};
-
-G.config = function ( config ) {
-    Object.keys( config ).forEach( function (k) {
-        G._config[k] = config[k];
-    });
-};
+(function () {
+    var config = {};
+    G.config = function ( key, value ) {
+        if ( !arguments.length ) {
+            return config;
+        } else if ( arguments.length === 2 ) {
+            G.config.set( key, value );
+        } else if ( Array.isArray(key) || typeof key === 'string' ) {
+            return G.config.get( key );
+        } else if ( typeof key === 'object' ) {
+            Object.keys( key ).forEach(function ( k ) {
+                G.config.set( k, key[k] );
+            });
+        }
+    };
+    G.config.set = function ( key, value ) {
+        var host = config;
+        if ( Array.isArray( key ) ) {
+            var tmp = key;
+            key = tmp.pop();
+            tmp.forEach(function ( k ) {
+                if ( !host[k] ) {
+                    host[k] = {};
+                }
+                host = host[k];
+            });
+        }
+        host[key] = value;
+    };
+    G.config.get = function ( key ) {
+        if ( !key ) {
+            return config;
+        }
+        var host = config;
+        if ( Array.isArray( key ) ) {
+            var len = key.length, i;
+            for ( i = 0; i <= len - 2; i++) {
+                if ( host[key[i]] ) {
+                    host = host[key[i]];
+                } else {
+                    return host[key[i]];
+                }
+            }
+            key = key[len-1];
+        }
+        return host[key];
+    };
+})();
 
 G.log = function (data) {
     if (G.config.debug && typeof console != 'undefined' && console.log){
@@ -315,7 +356,7 @@ G.when = function ( defers ){
 };
 })( G );
 /******** Loader ********/
-(function ( global, G, util, config ) {
+(function ( global, G, util ) {
     var STATUS = {
         'ERROR'     : -2,   // The module throw an error while compling
         'FAILED'    : -1,   // The module file's fetching is failed
@@ -334,6 +375,7 @@ G.when = function ( defers ){
                  doc.getElementsByTagName('head')[0] ||
                  docac.documentElement;
     var IS_CSS_RE = /\.css(?:\?|$)/i;
+    var config = G.config();
 
     G.use = function ( deps, cb ) {
         var module = Module( util.guid( 'module' ) );
@@ -349,7 +391,7 @@ G.when = function ( defers ){
 
     global.define = G.add = function ( id, deps, fn ) {
         // NOTE: combo file must be defined in this style:
-        // 
+        //
         // -------  test.cmb.js  ---------
         //       define( id1, deps1, fn1);
         //       define( id2, deps2, fn2);
@@ -435,7 +477,7 @@ G.when = function ( defers ){
     var require = Require( window.location.href ); // the default `require`
 
     /****** Module ******/
-    
+
     // Get or Create a module object
     function Module (id) {
         if ( !Module.cache[id] ) {
@@ -559,7 +601,7 @@ G.when = function ( defers ){
     function jsLoader ( module, config ) {
         var id = module.id;
         var combine = config.combine[id];
-        
+
         if ( combine ) {
             combine = combine.map( function ( id ) {
                 return Module( id );
@@ -591,8 +633,8 @@ G.when = function ( defers ){
         node.setAttribute( 'async', true );
 
         node.onload = node.onreadystatechange = function(){
-            if ( !done && 
-                    ( !this.readyState || 
+            if ( !done &&
+                    ( !this.readyState ||
                       this.readyState == "loaded" ||
                       this.readyState == "complete" )
             ){
@@ -850,8 +892,8 @@ G.when = function ( defers ){
         };
     });
     define( 'util', [], G.util );
-    define( 'config', [], G._config );
+    define( 'config', [], G.config() );
     define( 'require', [], function () {
         return Require();
     });
-}) (window, G, G.util, G._config);
+}) (window, G, G.util);

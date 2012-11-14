@@ -1,5 +1,5 @@
 /******** Loader ********/
-(function ( global, G, util, config ) {
+(function ( global, G, util ) {
     var STATUS = {
         'ERROR'     : -2,   // The module throw an error while compling
         'FAILED'    : -1,   // The module file's fetching is failed
@@ -18,6 +18,7 @@
                  doc.getElementsByTagName('head')[0] ||
                  docac.documentElement;
     var IS_CSS_RE = /\.css(?:\?|$)/i;
+    var config = G.config();
 
     G.use = function ( deps, cb ) {
         var module = Module( util.guid( 'module' ) );
@@ -33,7 +34,7 @@
 
     global.define = G.add = function ( id, deps, fn ) {
         // NOTE: combo file must be defined in this style:
-        // 
+        //
         // -------  test.cmb.js  ---------
         //       define( id1, deps1, fn1);
         //       define( id2, deps2, fn2);
@@ -119,7 +120,7 @@
     var require = Require( window.location.href ); // the default `require`
 
     /****** Module ******/
-    
+
     // Get or Create a module object
     function Module (id) {
         if ( !Module.cache[id] ) {
@@ -243,7 +244,7 @@
     function jsLoader ( module, config ) {
         var id = module.id;
         var combine = config.combine[id];
-        
+
         if ( combine ) {
             combine = combine.map( function ( id ) {
                 return Module( id );
@@ -275,8 +276,8 @@
         node.setAttribute( 'async', true );
 
         node.onload = node.onreadystatechange = function(){
-            if ( !done && 
-                    ( !this.readyState || 
+            if ( !done &&
+                    ( !this.readyState ||
                       this.readyState == "loaded" ||
                       this.readyState == "complete" )
             ){
@@ -534,8 +535,8 @@
         };
     });
     define( 'util', [], G.util );
-    define( 'config', [], G._config );
+    define( 'config', [], G.config() );
     define( 'require', [], function () {
         return Require();
     });
-}) (window, G, G.util, G._config);
+}) (window, G, G.util);
