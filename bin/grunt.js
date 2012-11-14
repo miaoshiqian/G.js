@@ -23,9 +23,9 @@ var gruntConfig = {
     concat: {
         "g-debug.js": {
             src: [
-                src + 'core/boot.js',
                 src + 'core/es5-safe.js',
                 src + 'core/json2.js',
+                src + 'core/boot.js',
                 src + 'core/util.js',
                 src + 'core/deferred.js',
                 src + 'core/loader.js'
@@ -43,9 +43,9 @@ var gruntConfig = {
         },
         "g.js": {
             src: [
-                src + 'core/boot.js',
                 src + 'core/es5-safe.js',
                 src + 'core/json2.js',
+                src + 'core/boot.js',
                 src + 'core/util.js',
                 src + 'core/deferred.js',
                 src + 'core/loader.js'
@@ -56,8 +56,9 @@ var gruntConfig = {
     min: {
         "g-debug.min.js": {
             src: [
-                src + 'core/boot.js',
                 src + 'core/es5-safe.js',
+                src + 'core/json2.js',
+                src + 'core/boot.js',
                 src + 'core/util.js',
                 src + 'core/deferred.js',
                 src + 'core/loader.js'
@@ -75,8 +76,9 @@ var gruntConfig = {
         },
         "public/g.js": {
             src: [
-                src + 'core/boot.js',
                 src + 'core/es5-safe.js',
+                src + 'core/json2.js',
+                src + 'core/boot.js',
                 src + 'core/util.js',
                 src + 'core/deferred.js',
                 src + 'core/loader.js'
