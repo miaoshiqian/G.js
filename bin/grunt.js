@@ -98,5 +98,5 @@ var gruntConfig = {
 module.exports = function(grunt) {
     grunt.loadTasks('tasks');
     grunt.initConfig(gruntConfig);
-    grunt.registerTask('default', 'lint concat min build_js');
+    grunt.registerTask('default', 'lint concat min build-config build_js');
 };

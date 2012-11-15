@@ -15,9 +15,6 @@ G.config({
     debug   : true,
     servers : ['http://gjs.com'],
     base    : '/src/',
-    version : {
-        'util/storage/localStorage.js': 100000
-    },
     alias   : {
         'jquery': 'lib/jquery/jquery-1.8.2.js',
         'localStorage': 'util/storage/localStorage.js'
@@ -31,6 +28,8 @@ G.use(['require', 'Promise', './expect.js', './mocha.js', './mocha.css'], functi
     var Promise = require('Promise');
     var allTest = [];
     mocha.setup('bdd');
+
+    // test G.config
     var gConfigTest = Promise.defer();
     allTest.push(gConfigTest);
     G.use(['./test_case/gConfig.test.js'], function (test) {
