@@ -1,6 +1,5 @@
 var path = require('path');
 var fs   = require('fs');
-var uglifyjs = require('uglify-js');
 function transport(str, id) {
     return eval(str);
     function define(factory) {
@@ -27,24 +26,14 @@ function getDepsFromFnStr(fnStr) {
     return deps;
 }
 
-function minifyCode(code) {
-    var jsp = uglifyjs.parser;
-    var pro = uglifyjs.uglify;
-
-    var ast = jsp.parse(code); // parse code and get the initial AST
-    ast = pro.ast_mangle(ast); // get a new AST with mangled names
-    ast = pro.ast_squeeze(ast); // get an AST with compression optimizations
-    return pro.gen_code(ast); // compressed code here
-}
-
 module.exports = function (grunt) {
     grunt.registerTask('build_js', 'Compile define(fn) into define(ID, deps, fn).', function () {
-        grunt.helper('build_js', grunt.config('build_js'));
-    });
-    grunt.registerHelper('build_js', function(config) {
-        var files = grunt.task.expandFiles(path.relative(__dirname, config.files));
-        var dest = config.dest;
-        var src = config.src;
+        var config = grunt.config('build_js');
+
+        var files  = grunt.task.expandFiles(path.relative(__dirname, config.files));
+        var dest   = config.dest;
+        var src    = config.src;
+
         files.forEach(function (file) {
             var f = fs.readFileSync(file.abs).toString();
             var uri = file.abs.replace(src, '');
@@ -52,9 +41,9 @@ module.exports = function (grunt) {
 
             if (f.substr(0, 6) === 'define') {
                 content = transport(f, uri);
-                grunt.file.write(dest + uri, minifyCode(content));
+                grunt.file.write(dest + uri, grunt.helper('uglify', content));
+                grunt.log.writeln(uri, 'updated');
             }
             grunt.config(['g-config', 'version', uri], stat.mtime/1000);
         });
-    });
-}
+    });}
