@@ -1054,9 +1054,9 @@ G.log = function (data) {
     var match = UA.match( /AppleWebKit\/([^\s]*)/ );
     if ( match && match[1] ) {
         ua.webkit = numberify( match[1] );
-        
+
         if ( / Mobile\//.test( UA ) ) {
-            ua.mobile = "Apple"; 
+            ua.mobile = "Apple";
 
             match = UA.match( /OS ([^\s]*)/ );
             if ( match && match[1] ) {
@@ -1069,7 +1069,7 @@ G.log = function (data) {
         } else {
             match = UA.match( /NokiaN[^\/]*|Android \d\.\d|webOS\/\d\.\d/ );
             if ( match ) {
-                ua.mobile = match[0]; 
+                ua.mobile = match[0];
             }
             if ( / Android/.test( ua ) ) {
                 ua.mobile = 'Android';
@@ -1086,7 +1086,7 @@ G.log = function (data) {
         } else {
             match = UA.match( /AdobeAIR\/([^\s]*)/ );
             if ( match ) {
-                ua.air = match[0]; 
+                ua.air = match[0];
             }
         }
     }
@@ -1097,16 +1097,16 @@ G.log = function (data) {
             ua.opera = numberify( match[1] );
             match = UA.match( /Opera Mini[^;]*/ );
             if ( match ) {
-                ua.mobile = match[0]; 
+                ua.mobile = match[0];
             }
         } else {
             match = UA.match( /MSIE\s([^;]*)/ );
             if ( match && match[1] ) {
                 ua.ie = numberify( match[1] );
-            } else { 
+            } else {
                 match = UA.match( /Gecko\/([^\s]*)/ );
                 if ( match ) {
-                    ua.gecko=1; 
+                    ua.gecko=1;
                     match = ua.match( /rv:([^\s\)]*)/ );
                     if ( match && match[1] ) {
                         ua.gecko = numberify( match[1] );
@@ -1163,7 +1163,7 @@ G.Deferred = function (){
 
     return {
         state: function () {
-            return state; 
+            return state;
         },
         done: function (cb) {
             if (typeof cb === 'function') {
@@ -1224,7 +1224,7 @@ G.when = function ( defers ){
     var ret     = G.Deferred();
     var len     = defers.length;
     var count   = 0;
-    
+
     if (!len) {
         return ret.done().promise();
     }
@@ -1260,7 +1260,7 @@ G.when = function ( defers ){
     var doc    = document;
     var head   = doc.head ||
                  doc.getElementsByTagName('head')[0] ||
-                 docac.documentElement;
+                 doc.documentElement;
     var IS_CSS_RE = /\.css(?:\?|$)/i;
     var config = G.config();
 
@@ -1276,26 +1276,7 @@ G.when = function ( defers ){
         Module.wait( module );
     };
 
-    global.define = G.add = function ( id, deps, fn ) {
-        // NOTE: combo file must be defined in this style:
-        //
-        // -------  test.cmb.js  ---------
-        //       define( id1, deps1, fn1);
-        //       define( id2, deps2, fn2);
-        //       ...
-        // -------    EOF    --------
-
-        // NOTE: in developer mode:
-        // -------  foo.js  ---------
-        //       define( function (require, exports, module) {...} );
-        // -------    EOF   ---------
-        //       or
-        // -------  bar.js  ---------
-        //       define( [dep1, dep2, dep3], function (require, exports, module) { ... });
-        // -------    EOF   ---------
-        //       in `bar.js` style, we won't try to find any other dependencies in the callback,
-        //       you must declear a full dependencies list and their `exports` will be the arguments of callback
-
+    var define = global.define = function ( id, deps, fn ) {
         if ( !util.lang.isString( id ) ) {
             deps = id;
             fn   = deps;
@@ -1306,7 +1287,7 @@ G.when = function ( defers ){
             deps = null;
         }
         if ( !deps ) {
-            deps = util.lang.isFunction( fn ) ?
+            deps = typeof fn === 'function' ?
                    getDepsFromFnStr( fn.toString() ):
                    [];
         }
@@ -1317,6 +1298,7 @@ G.when = function ( defers ){
                 var url    = getScriptUrl( script );
 
                 id = URLtoID( url );
+
                 if ( id ) {
                     return Module.save( id, deps, fn );
                 }
@@ -1333,10 +1315,10 @@ G.when = function ( defers ){
         context = context || window.location.href;
         function require ( id ) {
             id = require.resolve( id );
-            if ( !Require.cache[id] ) {
+            if ( !Module.cache[id] || Module.cache[id].status !== STATUS.COMPILED ) {
                 throw new Error( 'This module is not found:' + id );
             }
-            return Require.cache[id].exports;
+            return Module.cache[id].exports;
         }
 
         require.resolve = function ( id ) {
@@ -1355,15 +1337,12 @@ G.when = function ( defers ){
         };
         // TODO: implement require.paths
 
-        require.cache = Require.cache;
+        require.cache = Module.cache;
 
         return require;
     }
-    Require.cache = {};
 
     var require = Require( window.location.href ); // the default `require`
-
-    /****** Module ******/
 
     // Get or Create a module object
     function Module (id) {
@@ -1400,7 +1379,7 @@ G.when = function ( defers ){
         var deps;
         module.status = STATUS.READY;
 
-        if ( util.lang.isFunction ( module.factory ) ) {
+        if ( typeof module.factory === 'function' ) {
             module.status = STATUS.COMPILING;
             try {
                 // G.use( [dep1, dep2, ...], function (dep1, dep2, ...) {} );
@@ -1413,17 +1392,16 @@ G.when = function ( defers ){
                 // define( id, deps, function (require, exports, module ) {} );
                 else {
                     module.exports = {};
+
                     module.pause = function () {
                         module.status = STATUS.PAUSE;
-                    };
-                    module.resume = function () {
-                        module.status = STATUS.COMPILED;
-                        Require.cache[module.id] = module;
-                        Module.defers[module.id].done();
+                        return function () {
+                            module.status = STATUS.COMPILED;
+                            Module.defers[module.id].done();
+                        };
                     };
                     Module.defers[module.id].done( function () {
                         delete module.pause;
-                        delete module.resume;
                     });
                     var result = module.factory.call( window, Require( module.id ), module.exports, module );
                     if (result) {
@@ -1440,7 +1418,6 @@ G.when = function ( defers ){
         }
         if ( module.status !== STATUS.PAUSE ) {
             module.status = STATUS.COMPILED;
-            Require.cache[module.id] = module;
             Module.defers[module.id].done();
         }
     };
@@ -1455,8 +1432,8 @@ G.when = function ( defers ){
         throw err;
     };
 
-    Module.load = function ( module ) {
-        var id      = module.id;
+    Module.fetch = function ( module ) {
+        var id     = module.id;
         module.url = getAbsoluteUrl( id );
 
         // always try .js ext
@@ -1477,36 +1454,39 @@ G.when = function ( defers ){
 
         Module.wait( module );
     };
+
     Module.Plugin = {
         Loaders: {
-            '.js'  : jsLoader,
-            '.css' : cssLoader
+            '.js'     : jsLoader,
+            '.css'    : cssLoader,
+            '.cmb.js' : cmbJsLoader
         }
     };
 
     // Loaders
-    function jsLoader ( module, config ) {
-        var id = module.id;
+    function cmbJsLoader ( module, config) {
+        var id      = module.id;
         var combine = config.combine[id];
 
-        if ( combine ) {
-            combine = combine.map( function ( id ) {
-                return Module( id );
-            });
-
-            if ( config.debug ) {
-                return define( id, combine.map( function ( dep ) {
-                    return dep.id;
-                } ) );
+        if (combine) {
+            if (config.debug) {
+                return define(id, combine);
             } else {
-                combine.forEach( function ( dep ) {
-                    if ( dep.status < STATUS.FETCHING ) {
+                combine = combine.map(function (id) {
+                    return Module(id);
+                });
+                combine.forEach(function (dep) {
+                    if (dep.status < STATUS.FETCHING) {
                         dep.status = STATUS.FETCHING;
                     }
-                } );
+                });
             }
         }
 
+        jsLoader(module, config);
+    }
+
+    function jsLoader ( module, config ) {
         var node  = doc.createElement( "script" );
         var done  = false;
         var timer = setTimeout( function () {
@@ -1522,8 +1502,8 @@ G.when = function ( defers ){
         node.onload = node.onreadystatechange = function(){
             if ( !done &&
                     ( !this.readyState ||
-                      this.readyState == "loaded" ||
-                      this.readyState == "complete" )
+                       this.readyState == "loaded" ||
+                       this.readyState == "complete" )
             ){
                 // clear
                 done = true;
@@ -1534,7 +1514,7 @@ G.when = function ( defers ){
                     module.status = STATUS.FETCHED;
                 }
                 if ( Module.queue.length ) {
-                    var m = Module.queue.shift();
+                    var m = Module.queue.pop();
                     Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
                 }
                 if ( module.status > 0 && module.status < STATUS.SAVED ) {
@@ -1677,21 +1657,24 @@ G.when = function ( defers ){
 
         toFetch.forEach( function ( dep ) {
             setTimeout(function () {
-                Module.load( dep );
+                Module.fetch( dep );
             }, 0);
         } );
 
         return modules;
     }
+
     var VERSION_RE = /-\d{1,20}\./;
     function URLtoID ( url ) {
         if ( !url ) return;
         if ( util.path.isAbsolute( url) ) {
             var found = false;
-            for (var i = config.servers.length - 1; i >= 0; i--) {
-                if ( url.indexOf( config.servers[i] + config.base ) === 0 ) {
-                    found = config.servers[i] + config.base;
-                    break;
+            if (config.servers) {
+                for (var i = config.servers.length - 1; i >= 0; i--) {
+                    if ( url.indexOf( config.servers[i] + config.base ) === 0 ) {
+                        found = config.servers[i] + config.base;
+                        break;
+                    }
                 }
             }
             if (found) {
@@ -1734,7 +1717,7 @@ G.when = function ( defers ){
         return deps;
     }
 
-    // get compling script node
+    // get compling script node, it works on IE
     var complingScript = null;
     function getComplingScriptNode () {
         if ( complingScript &&
@@ -1769,7 +1752,8 @@ G.when = function ( defers ){
         }
     }
     G.Module = {
-        cache: Module.cache
+        cache: Module.cache,
+        queue: Module.queue
     };
 
     define( 'Promise', [], function () {

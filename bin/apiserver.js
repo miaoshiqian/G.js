@@ -18,8 +18,33 @@ apiServer.addModule('1', 'config', {
     }
 });
 
+apiServer.addModule('1', 'server', {
+    tpl: {
+        get: function (request, response) {
+            var Hogan = require('./lib/hogan/hogan');
+            var fs = require('fs');
+            var path = request.querystring.file;
+            console.log(path);
+            fs.readFile('../' + path, function (err, tpl) {
+                if (err || !tpl) {
+                    response.end('throw new Error("tpl not found");');
+                }
+                tpl = tpl.toString().replace(/'/g, "\\'").split('\n').join('\\n');
+                response.end(
+                    'define(function (require, exports, module) {\n'+
+                    '    var Hogan = require("lib/hogan/hogan.js");\n'+
+                    '    module.exports = Hogan.compile(\''+tpl+'\');\n'+
+                    '});'
+                );
+            });
+
+        }
+    }
+});
+
 apiServer.router.addRoutes([
-    ['/config', '1/config#config']
+    ['/config', '1/config#config'],
+    ['/server/tpl', '1/server#tpl']
 ]);
 
 apiServer.listen();

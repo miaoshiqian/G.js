@@ -1,7 +1,6 @@
 {
     "combine": {
         "util/storage/storage.cmb.js": [
-            "util/storage/cookie.js",
             "util/storage/localStorage.js",
             "util/storage/sessionStorage.js",
             "util/storage/flashStorage.js"

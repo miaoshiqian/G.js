@@ -111,9 +111,9 @@
     var match = UA.match( /AppleWebKit\/([^\s]*)/ );
     if ( match && match[1] ) {
         ua.webkit = numberify( match[1] );
-        
+
         if ( / Mobile\//.test( UA ) ) {
-            ua.mobile = "Apple"; 
+            ua.mobile = "Apple";
 
             match = UA.match( /OS ([^\s]*)/ );
             if ( match && match[1] ) {
@@ -126,7 +126,7 @@
         } else {
             match = UA.match( /NokiaN[^\/]*|Android \d\.\d|webOS\/\d\.\d/ );
             if ( match ) {
-                ua.mobile = match[0]; 
+                ua.mobile = match[0];
             }
             if ( / Android/.test( ua ) ) {
                 ua.mobile = 'Android';
@@ -143,7 +143,7 @@
         } else {
             match = UA.match( /AdobeAIR\/([^\s]*)/ );
             if ( match ) {
-                ua.air = match[0]; 
+                ua.air = match[0];
             }
         }
     }
@@ -154,16 +154,16 @@
             ua.opera = numberify( match[1] );
             match = UA.match( /Opera Mini[^;]*/ );
             if ( match ) {
-                ua.mobile = match[0]; 
+                ua.mobile = match[0];
             }
         } else {
             match = UA.match( /MSIE\s([^;]*)/ );
             if ( match && match[1] ) {
                 ua.ie = numberify( match[1] );
-            } else { 
+            } else {
                 match = UA.match( /Gecko\/([^\s]*)/ );
                 if ( match ) {
-                    ua.gecko=1; 
+                    ua.gecko=1;
                     match = ua.match( /rv:([^\s\)]*)/ );
                     if ( match && match[1] ) {
                         ua.gecko = numberify( match[1] );

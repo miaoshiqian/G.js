@@ -36,7 +36,7 @@ G.Deferred = function (){
 
     return {
         state: function () {
-            return state; 
+            return state;
         },
         done: function (cb) {
             if (typeof cb === 'function') {
@@ -97,7 +97,7 @@ G.when = function ( defers ){
     var ret     = G.Deferred();
     var len     = defers.length;
     var count   = 0;
-    
+
     if (!len) {
         return ret.done().promise();
     }

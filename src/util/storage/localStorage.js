@@ -9,7 +9,7 @@ define(function ( require, exports, module ) {
     // in IE 6-7, we use UserData instead
     if ( !window.localStorage ) {
         // pause the module declearation until the iframe loaded
-        module.pause();
+        var done = module.pause();
 
         var iframe = document.createElement("<iframe>");
         iframe.src = 'javascript:false';
@@ -119,9 +119,9 @@ define(function ( require, exports, module ) {
 
             module.exports = Storage;
             // this module is now ready
-            module.resume();
+            done();
         });
-        
+
         document.appendChild( iframe );
 
         iframe.src = config.server + "/crossdomain.html";
@@ -188,7 +188,7 @@ define(function ( require, exports, module ) {
             };
             return self;
         };
-        
+
         var storage = Storage( DEFAULT_NAMESPACE );
         Storage.get = storage.get;
         Storage.set = storage.set;
