@@ -30,6 +30,7 @@
         module.factory = cb;
 
         Module.wait( module );
+        return Module.defer[module.id];
     };
 
     var define = global.define = function ( id, deps, fn ) {
@@ -44,7 +45,7 @@
         }
         if ( !deps ) {
             deps = typeof fn === 'function' ?
-                   getDepsFromFnStr( fn.toString() ):
+                   getDepsFromFnStr( fn.toString() ) :
                    [];
         }
 
@@ -91,6 +92,9 @@
             }
             return id;
         };
+
+        require.async = G.use;
+
         // TODO: implement require.paths
 
         require.cache = Module.cache;
@@ -149,7 +153,7 @@
                 else {
                     module.exports = {};
 
-                    module.pause = function () {
+                    module.async = function () {
                         module.status = STATUS.PAUSE;
                         return function () {
                             module.status = STATUS.COMPILED;
@@ -157,7 +161,7 @@
                         };
                     };
                     Module.defers[module.id].done( function () {
-                        delete module.pause;
+                        delete module.async;
                     });
                     var result = module.factory.call( window, Require( module.id ), module.exports, module );
                     if (result) {

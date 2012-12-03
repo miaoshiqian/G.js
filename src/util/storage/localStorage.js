@@ -9,7 +9,7 @@ define(function ( require, exports, module ) {
     // in IE 6-7, we use UserData instead
     if ( !window.localStorage ) {
         // pause the module declearation until the iframe loaded
-        var done = module.pause();
+        var done = module.async();
 
         var iframe = document.createElement("<iframe>");
         iframe.src = 'javascript:false';
