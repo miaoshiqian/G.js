@@ -2,7 +2,6 @@ define(function (require, exports, module) {
     var Events    = require('lib/event/event.js');
     var SWFUpload = require('./swfupload-2.5.3.js');
     var $         = require('jquery');
-
     var Uploader = function (config) {
         var self = this;
         Events.mixTo(this);
@@ -37,7 +36,7 @@ define(function (require, exports, module) {
 
         var settings = {
             upload_url: config.url
-            ,flash_url : 'http://gjs.com/src/' + require.resolve('./uploader.swf')
+            ,flash_url : G.config('server') + '/src/' + require.resolve('./uploader.swf')
             ,debug: true
             ,post_params: postParams
 
