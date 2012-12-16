@@ -1,3 +1,5 @@
+define( function ( require, exports, module ) {
+
 /*!
  * jQuery JavaScript Library v1.8.2
  * http://jquery.com/
@@ -11,7 +13,6 @@
  *
  * Date: Thu Sep 20 2012 21:13:05 GMT-0400 (Eastern Daylight Time)
  */
-define( function ( require, exports, module ) {
 (function( window, undefined ) {
 var
     // A central reference to the root jQuery(document)

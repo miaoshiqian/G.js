@@ -44,13 +44,26 @@ apiServer.addModule('1', 'server', {
             var file = request.querystring.file;
             response.setHeader('Content-Type', 'application/x-javascript');
             console.log(path.resolve(file));
+            if (request.querystring.test) {
+                file = '' + file;
+            } else {
+                file = 'src/' + file;
+            }
             fs.readFile(file, function (err, js) {
                 if (err || !js) {
+                                console.log(require('path').resolve(file), 'not found');
+
                     response.end('throw new Error("js not found: ' + file + '");');
+                    return;
                 }
                 js = js.toString();
                 if (js.substr(0, 6) === 'define') {
-                    var id = file.replace('src/', '');
+                    var id = '';
+                    if (request.querystring.test) {
+                        id = "http://gjs.com/" + file.replace('../', '');
+                    } else {
+                        id = file.replace('src/', '');
+                    }
                     response.end(transport(js, id));
                 } else {
                     response.end(js);

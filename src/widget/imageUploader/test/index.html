@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>uploader test</title>
+        <meta charset="UTF-8" />
+        <script src="/dist/g-debug.js"  charset="UTF-8"></script>
+        <script type="text/javascript">
+        G.config({
+            debug   : true,
+            servers : ['http://gjs.com'],
+            base    : '/src/',
+            alias   : {
+                'jquery': 'lib/jquery/jquery-1.8.2.js',
+            }
+        });
+        </script>
+        <style type="text/css">
+img {
+    width: 80px; height: 80px;
+}
+        </style>
+    </head>
+<body>
+<div id="uploader">
+    <div class="js-btn-container"></div>
+    <span class="js-message"></span>
+    <ul class="js-img-list">
+
+    </ul>
+    <input type="hidden" class="js-input">
+</div>
+
+<script type="text/javascript">
+G.use(['jquery', 'widget/imageUploader/image_uploader.js'], function ( $, Uploader ) {
+    var uploader = new Uploader({
+        $el: $('#uploader'),
+        width: 80,
+        height: 24,
+        maxNum: 8,
+        url: '/src/widget/imageUploader/test/upload.php'
+    });
+    uploader.on('upload.start', function () {
+        console.log('start');
+    })
+});
+</script>
+</body>
+</html>

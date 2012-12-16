@@ -53,7 +53,7 @@ module.exports = function (grunt) {
             files = tmp;
         }
         files.forEach(function (file) {
-            var content = grunt.helper('uglify', fs.readFileSync(file).toString());
+            var content = fs.readFileSync(file).toString();
             var uri = file.replace('src/', '');
             var stat = fs.statSync(file);
             var isExcluded = exclude.some(function (pattern) {
@@ -64,9 +64,9 @@ module.exports = function (grunt) {
                 grunt.log.writeln('building: '+uri);
                 if (content.substr(0, 6) === 'define') {
                     content = transport(content, uri);
-                    grunt.file.write(dest + uri, content);
+                    grunt.file.write(dest + uri, grunt.helper('uglify', content));
                 } else {
-                    grunt.file.write(dest + uri, content);
+                    grunt.file.write(dest + uri, grunt.helper('uglify', content));
                 }
             }
 

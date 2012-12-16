@@ -164,7 +164,7 @@
                 match = UA.match( /Gecko\/([^\s]*)/ );
                 if ( match ) {
                     ua.gecko=1;
-                    match = ua.match( /rv:([^\s\)]*)/ );
+                    match = UA.match( /rv:([^\s\)]*)/ );
                     if ( match && match[1] ) {
                         ua.gecko = numberify( match[1] );
                     }

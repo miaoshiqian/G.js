@@ -103,15 +103,18 @@ G.when = function ( defers ){
     }
 
     /*jshint loopfunc:true*/
-    for ( var i = defers.length - 1; i >= 0; i-- ) {
-        defers[i].fail(function () {
-            ret.fail();
-        }).done(function () {
-            if ( ++count === len ) {
-                ret.done();
-            }
-        });
-    }
+    defers.forEach(function (defer) {
+        defer
+            .fail(function () {
+                ret.fail();
+            })
+            .done(function () {
+                if (++count === len) {
+                    ret.done();
+                }
+            });
+    });
+
     return ret.promise();
 };
 })( G );

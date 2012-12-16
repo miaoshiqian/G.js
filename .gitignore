@@ -4,3 +4,4 @@ src/g.js
 node_modules
 public
 src/app/
+src/widget/imageUploader/test/upload/

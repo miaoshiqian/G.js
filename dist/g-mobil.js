@@ -220,7 +220,7 @@ G.log = function (data) {
                 match = UA.match( /Gecko\/([^\s]*)/ );
                 if ( match ) {
                     ua.gecko=1;
-                    match = ua.match( /rv:([^\s\)]*)/ );
+                    match = UA.match( /rv:([^\s\)]*)/ );
                     if ( match && match[1] ) {
                         ua.gecko = numberify( match[1] );
                     }
@@ -343,15 +343,18 @@ G.when = function ( defers ){
     }
 
     /*jshint loopfunc:true*/
-    for ( var i = defers.length - 1; i >= 0; i-- ) {
-        defers[i].fail(function () {
-            ret.fail();
-        }).done(function () {
-            if ( ++count === len ) {
-                ret.done();
-            }
-        });
-    }
+    defers.forEach(function (defer) {
+        defer
+            .fail(function () {
+                ret.fail();
+            })
+            .done(function () {
+                if (++count === len) {
+                    ret.done();
+                }
+            });
+    });
+
     return ret.promise();
 };
 })( G );
@@ -369,25 +372,24 @@ G.when = function ( defers ){
         'COMPILED'  : 7     // The module is compiled and module.exports is available.
     };
 
-    var defers = {};
     var doc    = document;
     var head   = doc.head ||
                  doc.getElementsByTagName('head')[0] ||
                  doc.documentElement;
-    var IS_CSS_RE = /\.css(?:\?|$)/i;
     var config = G.config();
 
-    G.use = function ( deps, cb ) {
+    G.use = function ( deps, cb, context ) {
         var module = Module( util.guid( 'module' ) );
         var id     = module.id;
         module.isAnonymous = true;
-        deps = resolveDeps( deps );
+        deps = resolveDeps( deps, context );
 
         module.dependencies = deps;
         module.factory = cb;
 
         Module.wait( module );
-        return Module.defer[module.id];
+
+        return Module.defers[id];
     };
 
     var define = global.define = function ( id, deps, fn ) {
@@ -450,7 +452,9 @@ G.when = function ( defers ){
             return id;
         };
 
-        require.async = G.use;
+        require.async = function ( deps, cb) {
+            G.use( deps, cb, context );
+        };
 
         // TODO: implement require.paths
 
@@ -458,8 +462,6 @@ G.when = function ( defers ){
 
         return require;
     }
-
-    var require = Require( window.location.href ); // the default `require`
 
     // Get or Create a module object
     function Module (id) {
@@ -482,7 +484,6 @@ G.when = function ( defers ){
         var deps = module.dependencies.map( function ( dep ) {
             return Module.defers[dep.id];
         } );
-
         G.when( deps )
             .done( function () {
                 Module.ready( module );
@@ -493,7 +494,7 @@ G.when = function ( defers ){
     };
 
     Module.ready = function ( module ) {
-        var deps;
+        var deps, exports;
         module.status = STATUS.READY;
 
         if ( typeof module.factory === 'function' ) {
@@ -504,7 +505,7 @@ G.when = function ( defers ){
                     deps = module.dependencies.map( function (dep) {
                         return dep.exports;
                     });
-                    module.factory.apply( window, deps );
+                    module.exports = module.factory.apply( window, deps );
                 }
                 // define( id, deps, function (require, exports, module ) {} );
                 else {
@@ -520,9 +521,9 @@ G.when = function ( defers ){
                     Module.defers[module.id].done( function () {
                         delete module.async;
                     });
-                    var result = module.factory.call( window, Require( module.id ), module.exports, module );
-                    if (result) {
-                        module.exports = result;
+                    exports = module.factory.call( window, Require( module.id ), module.exports, module );
+                    if (exports) {
+                        module.exports = exports;
                     }
                 }
             } catch (ex) {
@@ -572,6 +573,12 @@ G.when = function ( defers ){
         Module.wait( module );
     };
 
+    Module.remove = function (id) {
+        var module = Module(id);
+        delete Module.cache[module.id];
+        delete Module.defers[module.id];
+    };
+
     Module.Plugin = {
         Loaders: {
             '.js'     : jsLoader,
@@ -603,12 +610,12 @@ G.when = function ( defers ){
         jsLoader(module, config);
     }
 
-    function jsLoader ( module, config ) {
+    function jsLoader ( module ) {
         var node  = doc.createElement( "script" );
         var done  = false;
         var timer = setTimeout( function () {
             head.removeChild( node );
-            moduleFail( module, 'Load timeout' );
+            Module.fail( module, 'Load timeout' );
         }, 30000 ); // 30s
 
         node.setAttribute( 'type', "text/javascript" );
@@ -619,8 +626,8 @@ G.when = function ( defers ){
         node.onload = node.onreadystatechange = function(){
             if ( !done &&
                     ( !this.readyState ||
-                       this.readyState == "loaded" ||
-                       this.readyState == "complete" )
+                       this.readyState === "loaded" ||
+                       this.readyState === "complete" )
             ){
                 // clear
                 done = true;
@@ -641,7 +648,7 @@ G.when = function ( defers ){
             }
         };
 
-        node.onerror = function( e ){
+        node.onerror = function(){
             clearTimeout( timer );
             head.removeChild( node );
             Module.fail( module, new Error( 'Load Fail' ) );
@@ -783,7 +790,9 @@ G.when = function ( defers ){
 
     var VERSION_RE = /-\d{1,20}\./;
     function URLtoID ( url ) {
-        if ( !url ) return;
+        if ( !url ) {
+            return;
+        }
         if ( util.path.isAbsolute( url) ) {
             var found = false;
             if (config.servers) {
@@ -809,7 +818,7 @@ G.when = function ( defers ){
 
     // convers id to absolute url
     function getAbsoluteUrl ( id ) {
-        var url = id, base = config.base;
+        var url = id;
         if ( util.path.isAbsolute( id ) ) {
             return id;
         }
@@ -826,7 +835,7 @@ G.when = function ( defers ){
 
     var REQUIRE_RE = /[^.]\s*require\s*\(\s*(["'])([^'"\s\)]+)\1\s*\)/g;
     function getDepsFromFnStr ( fnStr ) {
-        var deps = [];
+        var deps = [], match;
         REQUIRE_RE.lastIndex = 0;
         while( (match = REQUIRE_RE.exec( fnStr )) ) {
             deps.push( match[2] );
@@ -870,7 +879,8 @@ G.when = function ( defers ){
     }
     G.Module = {
         cache: Module.cache,
-        queue: Module.queue
+        queue: Module.queue,
+        remove: Module.remove
     };
 
     define( 'Promise', [], function () {
@@ -881,7 +891,7 @@ G.when = function ( defers ){
     });
     define( 'util', [], G.util );
     define( 'config', [], G.config() );
-    define( 'require', [], function () {
-        return Require();
-    });
+    // define( 'require', [], function () {
+    //     return Require(window.location.href);
+    // });
 }) (window, G, G.util);
