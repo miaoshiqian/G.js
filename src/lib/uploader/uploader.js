@@ -36,6 +36,8 @@ define(function (require, exports, module) {
         }, config);
 
         var $el = config.$el = $(config.$el);
+        self.$el   = $el;
+        self.files = [];
 
         Events.mixTo(self);
 
@@ -45,12 +47,17 @@ define(function (require, exports, module) {
             self.trigger('ready', type)
         });
 
+        self
+            .on('upload.success', function (file) {
+                self.files.push(file);
+            });
+
         require.async(['./flash_uploader.js'], function (FlashUploader) {
             var uploader = new FlashUploader(config);
+            uploader.ready(function () {
+                self.ready();
+            })
             uploader
-                .on('ready', function () {
-                    self.ready();
-                })
                 .on('upload.start', function (file) {
                     self.trigger('upload.start', file)
                 })
@@ -73,6 +80,10 @@ define(function (require, exports, module) {
                     self.trigger('upload.complete', file);
                 });
         });
+    }
+
+    Uploader.prototype.toJSON = function () {
+        return JSON.stringify(this.files);
     }
 
     module.exports = Uploader;

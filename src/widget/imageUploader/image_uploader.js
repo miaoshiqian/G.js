@@ -19,9 +19,10 @@ define(function (require, exports, module) {
             this.$message.html(msg);
         };
         this.fileEls = {};
+        this.files = [];
         this.setMessage('正在载入上传控件...');
 
-        var uploader = new Uploader($.extend({}, config, {$el: this.$el.find('.js-btn-container')}));
+        var uploader = self.uploader = new Uploader($.extend({}, config, {$el: this.$el.find('.js-btn-container')}));
 
         uploader.ready(function () {
             self.setMessage('上传控件载入成功');
@@ -32,7 +33,7 @@ define(function (require, exports, module) {
                 self.onStart(file);
             })
             .on('upload.complete', function (file) {
-                console.log('complete', file);
+                self.onComplete(file);
             })
             .on('encode.progress', function (file, load, total) {
                 self.onEncodeProgress(file, load, total);
@@ -41,16 +42,18 @@ define(function (require, exports, module) {
                 self.onProgress(file, load, total);
             })
             .on('upload.success', function (file) {
-                self.onSuccess(file)
+                self.onSuccess(file);
+            })
+            .on('upload.error', function (file) {
+                self.onError(file);
             });
     }
 
     ImageUploader.prototype.setMessage = function (msg) {
-        this.$message.html(msg)
-    }
+        this.$message.html(msg);
+    };
 
-    ImageUploader.prototype.onStart = function (fileInfo) {
-        console.log(fileInfo, 'start');
+    ImageUploader.prototype.onStart = function (file) {
         var self = this;
 
         var $file = $('<li></li>');
@@ -61,42 +64,42 @@ define(function (require, exports, module) {
             .append($status)
             .appendTo(this.$list);
 
-        this.fileEls[fileInfo.id] = $file;
+        this.fileEls[file.id] = $file;
 
         $status.text('正在等待');
 
         $close.on('click', function () {
-            self.cancel(fileInfo.id);
+            self.cancel(file.id);
             $file.remove();
             return false;
         });
-    }
+    };
 
-    ImageUploader.prototype.onSuccess = function (fileInfo) {
+    ImageUploader.prototype.onSuccess = function (file) {
         var self    = this;
-        var $file   = this.fileEls[fileInfo.id];
+        var $file   = this.fileEls[file.id];
         var $status = $file.find('.js-status');
         var $close  = $file.find('.js-close');
         var $img    = $('<img>');
-        console.log(fileInfo.url);
-        $img.attr('src', fileInfo.url);
+        $img.attr('src', file.url);
 
         $file.append($img);
 
         $status.text('上传成功');
 
+        this.$input.val(this.toJSON());
+
         $close
             .off()
             .click(function () {
                 $file.remove();
-                self.remove(fileInfo.id);
+                self.remove(file.id);
                 return false;
             });
-    }
+    };
 
-    ImageUploader.prototype.onError = function (fileInfo, msg) {
-        var self    = this;
-        var $file   = this.fileEls[fileInfo.id];
+    ImageUploader.prototype.onError = function (file, msg) {
+        var $file   = this.fileEls[file.id];
         var $status = $file.find('.js-status');
         var $close  = $file.find('.js-close');
 
@@ -106,29 +109,37 @@ define(function (require, exports, module) {
         setTimeout(function () {
             $file.remove();
         }, 3000);
-    }
+    };
 
-    ImageUploader.prototype.onProgress = function (fileInfo, load, total) {
-        console.log(fileInfo.id, Object.keys(this.fileEls));
-        var self    = this;
-        var $file   = this.fileEls[fileInfo.id];
+    ImageUploader.prototype.onProgress = function (file, load, total) {
+        var $file   = this.fileEls[file.id];
         var $status = $file.find('.js-status');
 
-        var percent = parseInt(load/total*100);
+        var percent = parseInt(load/total*100, 10);
 
         $status.text("正在上传:" + percent + "%");
-    }
+    };
 
-    ImageUploader.prototype.onEncodeProgress = function (fileInfo, load, total) {
-        console.log(fileInfo.id, Object.keys(this.fileEls));
-        var self    = this;
-        var $file   = this.fileEls[fileInfo.id];
+    ImageUploader.prototype.onEncodeProgress = function (file, load, total) {
+        var $file   = this.fileEls[file.id];
         var $status = $file.find('.js-status');
 
-        var percent = parseInt(load/total*100);
+        var percent = parseInt(load/total*100, 10);
 
         $status.text("正在压缩:" + percent + "%");
+    };
+
+    ImageUploader.prototype.onComplete = function (file) {
+
+    };
+
+    ImageUploader.prototype.onError = function (file) {
+
     }
+
+    ImageUploader.prototype.toJSON = function () {
+        return this.uploader.toJSON();
+    };
 
     module.exports = ImageUploader;
 });

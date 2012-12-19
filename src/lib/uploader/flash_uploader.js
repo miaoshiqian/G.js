@@ -2,6 +2,8 @@ define(function (require, exports, module) {
     var Events    = require('lib/event/event.js');
     var SWFUpload = require('./swfupload-2.5.3.js');
     var $         = require('jquery');
+    var Promise   = require('Promise');
+
     var Uploader = function (config) {
         var self = this;
         Events.mixTo(this);
@@ -22,7 +24,7 @@ define(function (require, exports, module) {
         var resizeHeight       = postParams.resizeHeight || 450;
         var quality            = config.quality || 65;
         var maxParallelCount   = 2;
-        var flashReady         = false;
+        var flashReady         = Promise.defer();
         var button_placeholder = $(config.$el)[0];
 
         // 已上传的文件
@@ -37,7 +39,7 @@ define(function (require, exports, module) {
         var settings = {
             upload_url: config.url
             ,flash_url : G.config('server') + '/src/' + require.resolve('./uploader.swf')
-            ,debug: true
+            ,debug: false
             ,post_params: postParams
 
             ,file_size_limit : postParams.MAX_FILE_SIZE
@@ -79,8 +81,8 @@ define(function (require, exports, module) {
                 self.trigger('load.fail');
             }
             ,swfupload_loaded_handler : function(){
-                if (!flashReady) {
-                    flashReady = true;
+                if (flashReady.state() === 'pending') {
+                    flashReady.done();
                     self.trigger('ready');
                 }
             }
@@ -214,6 +216,8 @@ define(function (require, exports, module) {
         if (settings.file_upload_limit < 1) {
             settings.file_upload_limit = 50;
         }
+
+        self.ready = flashReady.promise().done;
 
         var uploader = new SWFUpload(settings);
         uploader.waitingQueue = [];
