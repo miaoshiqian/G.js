@@ -44,8 +44,8 @@ define(function (require, exports, module) {
             .on('upload.success', function (file) {
                 self.onSuccess(file);
             })
-            .on('upload.error', function (file) {
-                self.onError(file);
+            .on('upload.error', function (file, msg) {
+                self.onError(file, msg);
             });
     }
 
@@ -131,8 +131,11 @@ define(function (require, exports, module) {
 
     };
 
-    ImageUploader.prototype.onError = function (file) {
+    ImageUploader.prototype.onError = function (file, msg) {
+        var $file = this.fileEls[file.id];
+        $status   = $file.find('.js-status');
 
+        $status.text("上传失败:" + msg);
     }
 
     ImageUploader.prototype.toJSON = function () {

@@ -67,8 +67,8 @@ define(function (require, exports, module) {
                 .on('upload.cancel', function (file) {
                     self.trigger('upload.cancel', file);
                 })
-                .on('upload.error', function (file) {
-                    self.trigger('upload.error', file);
+                .on('upload.error', function (file, msg) {
+                    self.trigger('upload.error', file, msg);
                 })
                 .on('encode.progress', function (file, load, total) {
                     self.trigger('encode.progress', file, load, total);
