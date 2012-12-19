@@ -57,7 +57,7 @@ define(function (require, exports, module) {
         var self = this;
 
         var $file = $('<li></li>');
-        var $status = $('<span class="js-status"></status>');
+        var $status = $('<span class="js-status"></span>');
         var $close = $('<a href="###" class="js-close">删除</a>');
 
         $file
@@ -65,7 +65,6 @@ define(function (require, exports, module) {
             .appendTo(this.$list);
 
         this.fileEls[file.id] = $file;
-
         $status.text('正在等待');
 
         $close.on('click', function () {
@@ -125,7 +124,6 @@ define(function (require, exports, module) {
         var $status = $file.find('.js-status');
 
         var percent = parseInt(load/total*100, 10);
-
         $status.text("正在压缩:" + percent + "%");
     };
 
