@@ -1,93 +1,102 @@
 (function () {
-G.Deferred = function (){
-    // state in ['pending', 'done', 'fail']
-    var state = "pending";
+G.Deferred = function () {
+    var PENDING = 'pending';
+    var DONE    = 'done';
+    var FAIL    = 'fail';
+
+    var state = PENDING;
     var callbacks = {
-            'done':     [],
-            'fail':     [],
-            'always':   []
+            'done'  : [],
+            'fail'  : [],
+            'always': []
         };
-    // `args` will be the `arguments` of callbacks
+
     var args = [];
+    var thisArg = {};
 
-    function dispatch ( status, cb ) {
-        if (typeof cb === 'function') {
-            if ( state === status || (status === 'always' && state !== 'pending') ) {
-                setTimeout( function () {
-                    cb.apply( {}, args );
-                }, 0 );
-            } else {
-                callbacks[status].push( cb );
+    var pub = {
+        done: function (cb) {
+            if (state === DONE) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
             }
-        } else if ( state === 'pending' ) { // only 'pending' can change to 'done' or 'fail'
-            state = status;
-            var cbs = callbacks[status];
-            var always = callbacks.always;
-            /*jshint loopfunc:true*/
-            while( (cb = cbs.shift()) || (cb = always.shift()) ) {
-                setTimeout( (function ( fn ) {
-                    return function () {
-                        fn.apply( {}, args );
-                    };
-                })( cb ), 0 );
-            }
-        }
-    }
 
-    return {
+            if (state === PENDING) {
+                callbacks.done.push(cb);
+            }
+            return pub;
+        },
+        fail: function (cb) {
+            if (state === FAIL) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
+            }
+
+            if (state === PENDING) {
+                callbacks.fail.push(cb);
+            }
+            return pub;
+        },
+        always: function (cb) {
+            if (state !== PENDING) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
+                return;
+            }
+
+            callbacks.always.push(cb);
+            return pub;
+        },
+        resolve: function () {
+            if (state !== PENDING) {
+                return pub;
+            }
+
+            args  = [].slice.call(arguments);
+            state = DONE;
+            dispatch(callbacks.done);
+            return pub;
+        },
+        reject: function () {
+            if (state !== PENDING) {
+                return pub;
+            }
+
+            args  = [].slice.call(arguments);
+            state = FAIL;
+            dispatch(callbacks.fail);
+            return pub;
+        },
         state: function () {
             return state;
         },
-        done: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('done', cb);
-            } else {
-                args = [].slice.call(arguments);
-                dispatch('done');
-            }
-            return this;
-        },
-        fail: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('fail', cb);
-            } else {
-                args = [].slice.call(arguments);
-                dispatch('fail');
-            }
-            return this;
-        },
-        always: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('always', cb);
-            }
-            return this;
-        },
         promise: function () {
-            return {
-                done: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('done', cb);
-                    }
-                    return this;
-                },
-                fail: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('fail', cb);
-                    }
-                    return this;
-                },
-                always: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('always', cb);
-                    }
-                    return this;
-                },
-                state: function () {
-                    return state;
+            var ret = {};
+            Object.keys(pub).forEach(function (k) {
+                if (k === 'resolve' || k === 'reject') {
+                    return;
                 }
-            };
+                ret[k] = pub[k];
+            });
+            return ret;
         }
     };
+
+    function dispatch(cbs) {
+        /*jshint loopfunc:true*/
+        while( (cb = cbs.shift()) || (cb = callbacks.always.shift()) ) {
+            setTimeout( (function ( fn ) {
+                return function () {
+                    fn.apply( {}, args );
+                };
+            })( cb ), 0 );
+        }
+    }
+
+    return pub;
 };
 
 G.when = function ( defers ){
@@ -99,18 +108,17 @@ G.when = function ( defers ){
     var count   = 0;
 
     if (!len) {
-        return ret.done().promise();
+        return ret.resolve().promise();
     }
 
-    /*jshint loopfunc:true*/
     defers.forEach(function (defer) {
         defer
             .fail(function () {
-                ret.fail();
+                ret.reject();
             })
             .done(function () {
                 if (++count === len) {
-                    ret.done();
+                    ret.resolve();
                 }
             });
     });

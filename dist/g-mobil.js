@@ -49,6 +49,10 @@ var G = this.G = {};
     };
 })();
 
+if (G_CONFIG) {
+    G.config(G_CONFIG);
+}
+
 G.log = function (data) {
     if (G.config.debug && typeof console != 'undefined' && console.log){
         console.log(data);
@@ -239,95 +243,104 @@ G.log = function (data) {
 
 }) (G);
 (function () {
-G.Deferred = function (){
-    // state in ['pending', 'done', 'fail']
-    var state = "pending";
+G.Deferred = function () {
+    var PENDING = 'pending';
+    var DONE    = 'done';
+    var FAIL    = 'fail';
+
+    var state = PENDING;
     var callbacks = {
-            'done':     [],
-            'fail':     [],
-            'always':   []
+            'done'  : [],
+            'fail'  : [],
+            'always': []
         };
-    // `args` will be the `arguments` of callbacks
+
     var args = [];
+    var thisArg = {};
 
-    function dispatch ( status, cb ) {
-        if (typeof cb === 'function') {
-            if ( state === status || (status === 'always' && state !== 'pending') ) {
-                setTimeout( function () {
-                    cb.apply( {}, args );
-                }, 0 );
-            } else {
-                callbacks[status].push( cb );
+    var pub = {
+        done: function (cb) {
+            if (state === DONE) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
             }
-        } else if ( state === 'pending' ) { // only 'pending' can change to 'done' or 'fail'
-            state = status;
-            var cbs = callbacks[status];
-            var always = callbacks.always;
-            /*jshint loopfunc:true*/
-            while( (cb = cbs.shift()) || (cb = always.shift()) ) {
-                setTimeout( (function ( fn ) {
-                    return function () {
-                        fn.apply( {}, args );
-                    };
-                })( cb ), 0 );
-            }
-        }
-    }
 
-    return {
+            if (state === PENDING) {
+                callbacks.done.push(cb);
+            }
+            return pub;
+        },
+        fail: function (cb) {
+            if (state === FAIL) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
+            }
+
+            if (state === PENDING) {
+                callbacks.fail.push(cb);
+            }
+            return pub;
+        },
+        always: function (cb) {
+            if (state !== PENDING) {
+                setTimeout(function () {
+                    cb.apply(thisArg, args);
+                }, 0);
+                return;
+            }
+
+            callbacks.always.push(cb);
+            return pub;
+        },
+        resolve: function () {
+            if (state !== PENDING) {
+                return pub;
+            }
+
+            args  = [].slice.call(arguments);
+            state = DONE;
+            dispatch(callbacks.done);
+            return pub;
+        },
+        reject: function () {
+            if (state !== PENDING) {
+                return pub;
+            }
+
+            args  = [].slice.call(arguments);
+            state = FAIL;
+            dispatch(callbacks.fail);
+            return pub;
+        },
         state: function () {
             return state;
         },
-        done: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('done', cb);
-            } else {
-                args = [].slice.call(arguments);
-                dispatch('done');
-            }
-            return this;
-        },
-        fail: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('fail', cb);
-            } else {
-                args = [].slice.call(arguments);
-                dispatch('fail');
-            }
-            return this;
-        },
-        always: function (cb) {
-            if (typeof cb === 'function') {
-                dispatch('always', cb);
-            }
-            return this;
-        },
         promise: function () {
-            return {
-                done: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('done', cb);
-                    }
-                    return this;
-                },
-                fail: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('fail', cb);
-                    }
-                    return this;
-                },
-                always: function (cb) {
-                    if (typeof cb === 'function') {
-                        dispatch('always', cb);
-                    }
-                    return this;
-                },
-                state: function () {
-                    return state;
+            var ret = {};
+            Object.keys(pub).forEach(function (k) {
+                if (k === 'resolve' || k === 'reject') {
+                    return;
                 }
-            };
+                ret[k] = pub[k];
+            });
+            return ret;
         }
     };
+
+    function dispatch(cbs) {
+        /*jshint loopfunc:true*/
+        while( (cb = cbs.shift()) || (cb = callbacks.always.shift()) ) {
+            setTimeout( (function ( fn ) {
+                return function () {
+                    fn.apply( {}, args );
+                };
+            })( cb ), 0 );
+        }
+    }
+
+    return pub;
 };
 
 G.when = function ( defers ){
@@ -339,18 +352,17 @@ G.when = function ( defers ){
     var count   = 0;
 
     if (!len) {
-        return ret.done().promise();
+        return ret.resolve().promise();
     }
 
-    /*jshint loopfunc:true*/
     defers.forEach(function (defer) {
         defer
             .fail(function () {
-                ret.fail();
+                ret.reject();
             })
             .done(function () {
                 if (++count === len) {
-                    ret.done();
+                    ret.resolve();
                 }
             });
     });
@@ -378,18 +390,28 @@ G.when = function ( defers ){
                  doc.documentElement;
     var config = G.config();
 
-    G.use = function ( deps, cb, context ) {
+    if ( !config.server && config.servers && config.servers.length) {
+        config.server = config.servers[ G.util.math.random(0, config.servers.length - 1) ];
+    }
+    config.baseUrl = config.server + config.base;
+
+
+    function use ( deps, cb ) {
         var module = Module( util.guid( 'module' ) );
         var id     = module.id;
         module.isAnonymous = true;
-        deps = resolveDeps( deps, context );
+        deps = resolveDeps( deps, this.context );
 
         module.dependencies = deps;
         module.factory = cb;
 
         Module.wait( module );
 
-        return Module.defers[id];
+        return Module.defers[id].promise();
+    }
+
+    G.use = function (deps, cb) {
+        return use.call({context: window.location.href}, deps, cb);
     };
 
     var define = global.define = function ( id, deps, fn ) {
@@ -447,13 +469,17 @@ G.when = function ( defers ){
             }
 
             if ( util.path.isRelative( id ) ) {
-                return util.path.realpath( util.path.dirname( context ) + id );
+                id = util.path.realpath( util.path.dirname( context ) + id );
+                if (id.indexOf(config.baseUrl) === 0) {
+                    return id.replace(config.baseUrl, '');
+                }
+                return id;
             }
             return id;
         };
 
-        require.async = function ( deps, cb) {
-            G.use( deps, cb, context );
+        require.async = function (deps, cb) {
+            return use.call({context: context}, deps, cb);
         };
 
         // TODO: implement require.paths
@@ -515,7 +541,7 @@ G.when = function ( defers ){
                         module.status = STATUS.PAUSE;
                         return function () {
                             module.status = STATUS.COMPILED;
-                            Module.defers[module.id].done();
+                            Module.defers[module.id].resolve(module.exports);
                         };
                     };
                     Module.defers[module.id].done( function () {
@@ -536,7 +562,7 @@ G.when = function ( defers ){
         }
         if ( module.status !== STATUS.PAUSE ) {
             module.status = STATUS.COMPILED;
-            Module.defers[module.id].done();
+            Module.defers[module.id].resolve(module.exports);
         }
     };
 
@@ -546,7 +572,7 @@ G.when = function ( defers ){
             return dep.id;
         } ) );
         G.log( 'ERR: '+err.message );
-        Module.defers[module.id].fail();
+        Module.defers[module.id].reject();
         throw err;
     };
 
@@ -726,7 +752,7 @@ G.when = function ( defers ){
             if ( combine ) {
                 combine.forEach( function ( dep ) {
                     dep.status = STATUS.COMPILED;
-                    Module.defers[dep.id].done();
+                    Module.defers[dep.id].resolve();
                 } );
             }
             Module.ready( module );
@@ -827,10 +853,8 @@ G.when = function ( defers ){
             v = config.version[id] || parseInt( ( v - ( v%72E5 ) ) / 1000, 10 );
             url = id.replace(/(\.(js|css|html?|swf|gif|png|jpe?g))$/i, '-' + v +"$1");
         }
-        if ( !config.server ) {
-            config.server = config.servers[ G.util.math.random(0, config.servers.length - 1) ];
-        }
-        return util.path.realpath( config.server + config.base + url );
+
+        return util.path.realpath( config.baseUrl + url );
     }
 
     var REQUIRE_RE = /[^.]\s*require\s*\(\s*(["'])([^'"\s\)]+)\1\s*\)/g;

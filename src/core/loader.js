@@ -18,18 +18,28 @@
                  doc.documentElement;
     var config = G.config();
 
-    G.use = function ( deps, cb, context ) {
+    if ( !config.server && config.servers && config.servers.length) {
+        config.server = config.servers[ G.util.math.random(0, config.servers.length - 1) ];
+    }
+    config.baseUrl = config.server + config.base;
+
+
+    function use ( deps, cb ) {
         var module = Module( util.guid( 'module' ) );
         var id     = module.id;
         module.isAnonymous = true;
-        deps = resolveDeps( deps, context );
+        deps = resolveDeps( deps, this.context );
 
         module.dependencies = deps;
         module.factory = cb;
 
         Module.wait( module );
 
-        return Module.defers[id];
+        return Module.defers[id].promise();
+    }
+
+    G.use = function (deps, cb) {
+        return use.call({context: window.location.href}, deps, cb);
     };
 
     var define = global.define = function ( id, deps, fn ) {
@@ -87,13 +97,17 @@
             }
 
             if ( util.path.isRelative( id ) ) {
-                return util.path.realpath( util.path.dirname( context ) + id );
+                id = util.path.realpath( util.path.dirname( context ) + id );
+                if (id.indexOf(config.baseUrl) === 0) {
+                    return id.replace(config.baseUrl, '');
+                }
+                return id;
             }
             return id;
         };
 
-        require.async = function ( deps, cb) {
-            G.use( deps, cb, context );
+        require.async = function (deps, cb) {
+            return use.call({context: context}, deps, cb);
         };
 
         // TODO: implement require.paths
@@ -155,7 +169,7 @@
                         module.status = STATUS.PAUSE;
                         return function () {
                             module.status = STATUS.COMPILED;
-                            Module.defers[module.id].done();
+                            Module.defers[module.id].resolve(module.exports);
                         };
                     };
                     Module.defers[module.id].done( function () {
@@ -176,7 +190,7 @@
         }
         if ( module.status !== STATUS.PAUSE ) {
             module.status = STATUS.COMPILED;
-            Module.defers[module.id].done();
+            Module.defers[module.id].resolve(module.exports);
         }
     };
 
@@ -186,7 +200,7 @@
             return dep.id;
         } ) );
         G.log( 'ERR: '+err.message );
-        Module.defers[module.id].fail();
+        Module.defers[module.id].reject();
         throw err;
     };
 
@@ -366,7 +380,7 @@
             if ( combine ) {
                 combine.forEach( function ( dep ) {
                     dep.status = STATUS.COMPILED;
-                    Module.defers[dep.id].done();
+                    Module.defers[dep.id].resolve();
                 } );
             }
             Module.ready( module );
@@ -467,10 +481,8 @@
             v = config.version[id] || parseInt( ( v - ( v%72E5 ) ) / 1000, 10 );
             url = id.replace(/(\.(js|css|html?|swf|gif|png|jpe?g))$/i, '-' + v +"$1");
         }
-        if ( !config.server ) {
-            config.server = config.servers[ G.util.math.random(0, config.servers.length - 1) ];
-        }
-        return util.path.realpath( config.server + config.base + url );
+
+        return util.path.realpath( config.baseUrl + url );
     }
 
     var REQUIRE_RE = /[^.]\s*require\s*\(\s*(["'])([^'"\s\)]+)\1\s*\)/g;

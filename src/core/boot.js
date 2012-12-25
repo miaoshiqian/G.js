@@ -49,6 +49,10 @@ var G = this.G = {};
     };
 })();
 
+if (G_CONFIG) {
+    G.config(G_CONFIG);
+}
+
 G.log = function (data) {
     if (G.config.debug && typeof console != 'undefined' && console.log){
         console.log(data);
