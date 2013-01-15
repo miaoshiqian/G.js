@@ -1,5 +1,5 @@
 define(function (require, exports, module) {
-    var except = require('../expect.js');
+    var except = require('../lib/expect.js');
 
     module.exports = function (defer) {
         describe('G.config', function(){

@@ -29,7 +29,7 @@ function getDepsFromFnStr(fnStr) {
 }
 
 module.exports = function (grunt) {
-    grunt.registerTask('build-js', 'Compile define(fn) into define(ID, deps, fn).', function () {
+    grunt.registerTask('build-js', 'Transport js files', function () {
         var config = grunt.config('build-js');
 
         var files   = config.files;

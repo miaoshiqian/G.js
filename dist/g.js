@@ -936,10 +936,6 @@ var G = this.G = {};
     };
 })();
 
-if (G_CONFIG) {
-    G.config(G_CONFIG);
-}
-
 G.log = function (data) {
     if (G.config.debug && typeof console != 'undefined' && console.log){
         console.log(data);
@@ -1277,12 +1273,6 @@ G.when = function ( defers ){
                  doc.documentElement;
     var config = G.config();
 
-    if ( !config.server && config.servers && config.servers.length) {
-        config.server = config.servers[ G.util.math.random(0, config.servers.length - 1) ];
-    }
-    config.baseUrl = config.server + config.base;
-
-
     function use ( deps, cb ) {
         var module = Module( util.guid( 'module' ) );
         var id     = module.id;
@@ -1357,8 +1347,9 @@ G.when = function ( defers ){
 
             if ( util.path.isRelative( id ) ) {
                 id = util.path.realpath( util.path.dirname( context ) + id );
-                if (id.indexOf(config.baseUrl) === 0) {
-                    return id.replace(config.baseUrl, '');
+                var baseUrl = G.config('baseUrl');
+                if (id.indexOf(baseUrl) === 0) {
+                    return id.replace(baseUrl, '');
                 }
                 return id;
             }
@@ -1708,10 +1699,11 @@ G.when = function ( defers ){
         }
         if ( util.path.isAbsolute( url) ) {
             var found = false;
-            if (config.servers) {
-                for (var i = config.servers.length - 1; i >= 0; i--) {
-                    if ( url.indexOf( config.servers[i] + config.base ) === 0 ) {
-                        found = config.servers[i] + config.base;
+            var servers = G.config('servers');
+            if (servers && servers.length) {
+                for (var i = servers.length - 1; i >= 0; i--) {
+                    if ( url.indexOf( servers[i] ) === 0 ) {
+                        found = servers[i];
                         break;
                     }
                 }
@@ -1741,7 +1733,7 @@ G.when = function ( defers ){
             url = id.replace(/(\.(js|css|html?|swf|gif|png|jpe?g))$/i, '-' + v +"$1");
         }
 
-        return util.path.realpath( config.baseUrl + url );
+        return util.path.realpath( G.config('baseUrl') + url );
     }
 
     var REQUIRE_RE = /[^.]\s*require\s*\(\s*(["'])([^'"\s\)]+)\1\s*\)/g;
@@ -1802,7 +1794,7 @@ G.when = function ( defers ){
     });
     define( 'util', [], G.util );
     define( 'config', [], G.config() );
-    // define( 'require', [], function () {
-    //     return Require(window.location.href);
-    // });
+    define( 'require', [], function () {
+        return Require(window.location.href);
+    });
 }) (window, G, G.util);

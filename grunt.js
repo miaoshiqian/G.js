@@ -57,6 +57,10 @@ var config = {
         "files"  : "src/**/*.js",
         "dest"   : "public/",
         "exclude": ["src/core/*.js"]
+    },
+    "build-css": {
+        "files"  : "src/**/*.css",
+        "dest"   : "public/"
     }
 };
 
@@ -67,7 +71,7 @@ module.exports = function(grunt) {
 
     grunt.loadTasks('bin/tasks');
     grunt.initConfig(config);
-    grunt.registerTask('default', 'lint concat build-js build-test');
+    grunt.registerTask('default', 'lint concat build-js build-css build-test build-crossdomain-helper');
 };
 
 function merge(to, from) {

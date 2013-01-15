@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <cross-domain-policy>
     <site-control permitted-cross-domain-policies="all"/>
-    <allow-access-from domain="*.{{base_host}}" to-ports="*"/>
-    <allow-http-request-headers-from domain="*.{{base_host}}" headers="*"/>
+    <allow-access-from domain="*.{{baseHost}}" to-ports="*"/>
+    <allow-http-request-headers-from domain="*.{{baseHost}}" headers="*"/>
 </cross-domain-policy>

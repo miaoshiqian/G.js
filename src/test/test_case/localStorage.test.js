@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
     var Storage = require('util/storage/localStorage.js');
-    var except = require('../expect.js');
+    var except = require('../lib/expect.js');
 
     module.exports = function (defer) {
         describe('localStorage', function(){

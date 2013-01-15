@@ -25,8 +25,8 @@
 <div id="mocha"></div>
 
 <script type="text/javascript">
-G.use(['require', 'Promise', './lib/expect.js', './lib/mocha.js', './lib.mocha.css'], function ( require ) {
-    var mocha = require('./mocha.js');
+G.use(['require', 'Promise', './lib/expect.js', './lib/mocha.js', './lib/mocha.css'], function ( require ) {
+    var mocha = require('./lib/mocha.js');
     var Promise = require('Promise');
     var testDefers = [];
     mocha.setup('bdd');
@@ -43,7 +43,7 @@ G.use(['require', 'Promise', './lib/expect.js', './lib/mocha.js', './lib.mocha.c
         }));
     });
 
-    Promise.when(allTest).done(function () {
+    Promise.when(testDefers).done(function () {
         mocha.run().globals(['match']);
     });
 });
