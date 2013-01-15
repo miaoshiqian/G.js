@@ -62,7 +62,16 @@ var config = {
 
 module.exports = function(grunt) {
     grunt.task.searchDirs.push('.');
+    // load config
+    merge(config, grunt.file.readJSON('src/config.json'));
+
     grunt.loadTasks('bin/tasks');
     grunt.initConfig(config);
-    grunt.registerTask('default', 'lint concat build-js');
+    grunt.registerTask('default', 'lint concat build-js build-test');
 };
+
+function merge(to, from) {
+    Object.keys(from).forEach(function (key) {
+        to[key] = from[key];
+    });
+}
