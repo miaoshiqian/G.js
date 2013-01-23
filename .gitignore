@@ -2,6 +2,7 @@
 .svn
 src/g.js
 node_modules
-public
+build
 src/app/
 src/widget/imageUploader/test/upload/
+src/as/uploader/
