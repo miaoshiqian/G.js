@@ -2,10 +2,10 @@
 <html>
     <head>
         <title>G.js test</title>
-        <script type="text/javascript">
-            document.domain = '{{baseHost}}';
-        </script>
         <meta charset="UTF-8" />
+        <script type="text/javascript">
+        document.domain = '{{baseHost}}';
+        </script>
         <script type="text/javascript" src="{{baseUrl}}/g.js"  charset="UTF-8"></script>
         <script type="text/javascript">
         G.config({
@@ -25,8 +25,7 @@
 <div id="mocha"></div>
 
 <script type="text/javascript">
-G.use(['require', 'Promise', './lib/expect.js', './lib/mocha.js', './lib/mocha.css'], function ( require ) {
-    var mocha = require('./lib/mocha.js');
+G.use(['require', 'Promise', './lib/mocha.js', './lib/mocha.css'], function ( require ) {
     var Promise = require('Promise');
     var testDefers = [];
     mocha.setup('bdd');

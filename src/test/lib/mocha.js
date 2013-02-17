@@ -4909,7 +4909,3 @@ process.on = function(e, fn){
   };
 })();
 })();
-
-define( function ( require, exports, module ) {
-  module.exports = mocha;
-} );

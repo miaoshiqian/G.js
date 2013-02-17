@@ -1,0 +1,32 @@
+{
+    "baseHost": "gdotjs.org",
+    "baseUrl": "http://static.gdotjs.org/",
+    "sourceDir": "src/",
+    "buildDir": "build/",
+    "lint": {
+        "files": [
+            "<sourceDir>core/boot.js",
+            "<sourceDir>core/deferred.js",
+            "<sourceDir>core/loader.js",
+            "<sourceDir>core/util.js",
+            "<sourceDir>util/**/*.js",
+            "<sourceDir>app/**/*.js",
+            "bin/tasks/*.js"
+        ]
+    },
+    "jshint": {
+        "options": {
+            "browser": true,
+            "scripturl": true
+        }
+    },
+    "build-js": {
+        "files"  : "**/*.js",
+        "minify" : false,
+        "exclude": ["core/*.js"]
+    },
+    "build-css": {
+        "files"  : "**/*.css",
+        "minify" : true
+    }
+}

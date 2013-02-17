@@ -124,7 +124,7 @@ define(function ( require, exports, module ) {
 
         document.appendChild( iframe );
 
-        iframe.src = config.server + "/crossdomain.html";
+        iframe.src = config.baseUrl + "/crossdomain.html";
     } else {
         Storage = function ( namespace ) {
             var saved_namespace = {};

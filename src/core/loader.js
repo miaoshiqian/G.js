@@ -37,37 +37,14 @@
     };
 
     var define = global.define = function ( id, deps, fn ) {
-        if ( !util.lang.isString( id ) ) {
-            deps = id;
-            fn   = deps;
-            id   = null;
+        if (typeof id !== 'string') {
+            throw 'ID must be a string';
         }
-        if ( !Array.isArray( deps ) ) {
-            fn   = deps;
-            deps = null;
+        if (!fn) {
+            fn = deps;
+            deps = [];
         }
-        if ( !deps ) {
-            deps = typeof fn === 'function' ?
-                   getDepsFromFnStr( fn.toString() ) :
-                   [];
-        }
-
-        if ( !id ) {
-            if ( util.ua.ie && util.ua.ie <= 8 ) {
-                var script = getComplingScriptNode();
-                var url    = getScriptUrl( script );
-
-                id = URLtoID( url );
-
-                if ( id ) {
-                    return Module.save( id, deps, fn );
-                }
-                G.log('could not got the id from interactive script');
-            }
-            return Module.queue.push( [deps, fn] );
-        } else {
-            return Module.save( id, deps, fn );
-        }
+        return Module.save(id, deps, fn);
     };
     define.amd = {};
 
@@ -286,10 +263,7 @@
                 if (module.status === STATUS.FETCHING) {
                     module.status = STATUS.FETCHED;
                 }
-                if ( Module.queue.length ) {
-                    var m = Module.queue.pop();
-                    Module.save( module.id, m[0], m[1] ); // m[0] === deps, m[1] === fn
-                }
+
                 if ( module.status > 0 && module.status < STATUS.SAVED ) {
                     G.log( module.id + ' is not a module' );
                     Module.ready( module );
@@ -416,8 +390,6 @@
         return node;
     }
 
-    // Util functions
-
     // convert dep string to module object, and fetch if not loaded
     function resolveDeps ( deps, context ) {
         var require = Require( context );
@@ -437,35 +409,6 @@
         return modules;
     }
 
-    var VERSION_RE = /-\d{1,20}\./;
-    function URLtoID ( url ) {
-        if ( !url ) {
-            return;
-        }
-        if ( util.path.isAbsolute( url) ) {
-            var found = false;
-            var servers = G.config('servers');
-            if (servers && servers.length) {
-                for (var i = servers.length - 1; i >= 0; i--) {
-                    if ( url.indexOf( servers[i] ) === 0 ) {
-                        found = servers[i];
-                        break;
-                    }
-                }
-            }
-            if (found) {
-                url = url.replace( found, '' );
-            } else {
-                return url;
-            }
-        }
-        // remove config.version
-        if ( VERSION_RE.test(url) ) {
-            url = url.replace( VERSION_RE, '.');
-        }
-        return url;
-    }
-
     // convers id to absolute url
     function getAbsoluteUrl ( id ) {
         var url = id;
@@ -479,44 +422,6 @@
         }
 
         return util.path.realpath( G.config('baseUrl') + url );
-    }
-
-    var REQUIRE_RE = /[^.]\s*require\s*\(\s*(["'])([^'"\s\)]+)\1\s*\)/g;
-    function getDepsFromFnStr ( fnStr ) {
-        var deps = [], match;
-        REQUIRE_RE.lastIndex = 0;
-        while( (match = REQUIRE_RE.exec( fnStr )) ) {
-            deps.push( match[2] );
-        }
-        return deps;
-    }
-
-    // get compling script node, it works on IE
-    var complingScript = null;
-    function getComplingScriptNode () {
-        if ( complingScript &&
-            complingScript.readyState === 'interactive' )
-        {
-            return complingScript;
-        }
-
-        var scripts = head.getElementsByTagName( 'script' );
-        var script, i = scripts.length - 1;
-        for ( ; i >= 0; i-- ) {
-            script = scripts[i];
-            if ( script.readyState === 'interactive' ) {
-                complingScript = script;
-                return complingScript;
-            }
-        }
-    }
-
-    function getScriptUrl ( node ) {
-        if (node) {
-            return node.hasAttribute ?
-               node.src :
-               node.getAttribute('src', true, 4);
-        }
     }
 
     function getExt ( url ) {

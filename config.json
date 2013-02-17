@@ -1,0 +1,40 @@
+{
+    "baseHost": "gdotjs.org",
+    "baseUrl": "http://static.gdotjs.org/",
+    "src": "src/",
+    "dest": "build/",
+    "minify": false,
+    "lint": {
+        "files": [
+            "<sourceDir>core/boot.js",
+            "<sourceDir>core/deferred.js",
+            "<sourceDir>core/loader.js",
+            "<sourceDir>core/util.js",
+            "<sourceDir>util/**/*.js",
+            "<sourceDir>app/**/*.js",
+            "bin/tasks/*.js"
+        ]
+    },
+    "jshint": {
+        "options": {
+            "browser": true,
+            "scripturl": true
+        }
+    },
+    "builder": [
+        ["core/*.js", "build-g-js"],
+        ["**/*.js", "build-js"],
+        ["**/*.css", "build-css"],
+        ["**/*.less", "build-less", "build-css"]
+    ],
+    "servers": [
+        {
+            "host": "root@jianbin.me",
+            "dest": "/var/www/static"
+        },
+        {
+            "host": "root@v.273.com.cn",
+            "dest": "/var/www/static"
+        }
+    ]
+}

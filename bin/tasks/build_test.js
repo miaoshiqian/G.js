@@ -4,10 +4,13 @@ module.exports = function (grunt) {
     });
 
     grunt.registerHelper('build-test-index-page', function () {
-        var content = grunt.file.read('src/test/index.html');
+        var from = grunt.config('sourceDir');
+        var to   = grunt.config('buildDir');
+
+        var content = grunt.file.read(from + 'test/index.html');
         content = content.replace(/\{\{baseHost\}\}/g, grunt.config('baseHost'))
                          .replace(/\{\{baseUrl\}\}/g, grunt.config('baseUrl'));
 
-        grunt.file.write('public/test/index.html', content);
+        grunt.file.write(to + 'test/index.html', content);
     });
 };

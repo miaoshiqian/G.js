@@ -1,32 +1,20 @@
+var sqwish = require('sqwish');
 
 module.exports = function (grunt) {
+    var minify  = grunt.config('minify');
+    var from    = grunt.config('src');
+    var to      = grunt.config('dest');
+
     grunt.registerTask('build-css', 'Compile css.', function () {
-        var config = grunt.config('build-css');
+        [].forEach.call(arguments, builder);
+    });
 
-        var files   = config.files;
-        var dest    = config.dest;
-
-        if (!Array.isArray(files)) {
-            files = grunt.task.expandFiles(files).map(function (file) {
-                return file.rel;
-            });
-        } else {
-            var tmp = [];
-            files.forEach(function (file) {
-                if (file.indexOf('*') !== -1) {
-                    tmp.concat(grunt.task.expandFiles(file).map(function (f) {
-                        return f.rel;
-                    }));
-                } else {
-                    tmp.push(file);
-                }
-            });
-            files = tmp;
+    function builder (id) {
+        var content = grunt.file.read(from + id);
+        if (minify) {
+            content = require('sqwish').minify(content);
         }
 
-        files.forEach(function (file) {
-            var content = grunt.file.read(file);
-            grunt.file.write(dest+file.replace('src/', ''), content);
-        });
-    });
+        grunt.file.write(to+id, content);
+    }
 };

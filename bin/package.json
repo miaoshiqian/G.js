@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "homepage": "https://github.com/j1anb1n/G.js",
   "dependencies": {
-    "uglify-js": ">=1.3.4",
-    "apiserver": ">=0.2.2"
+    "sqwish": ">=0.0.1",
+    "rsyncwrapper": ">=0.0.1"
   }
 }
